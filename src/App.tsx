@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { ThemeToggle } from './components/ThemeToggle'
+import DashboardPage from './pages/DashboardPage'
 
 const features = [
   {
@@ -37,7 +39,7 @@ const stats = [
   { label: 'Days left', value: '12' },
 ]
 
-function Navbar() {
+function Navbar({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
@@ -59,7 +61,10 @@ function Navbar() {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:border-teal hover:text-teal">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:border-teal hover:text-teal"
+          >
             Login
           </button>
         </div>
@@ -121,7 +126,7 @@ function ProductVisual() {
   )
 }
 
-function Hero() {
+function Hero({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
   return (
     <section
       id="top"
@@ -138,7 +143,10 @@ function Hero() {
           Transform notes into active recall and boost your learning.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <button className="rounded-lg bg-purple px-6 py-3.5 text-base font-bold text-purple-foreground shadow-[0_16px_40px_color-mix(in_srgb,var(--purple)_28%,transparent)] transition hover:brightness-110">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="rounded-lg bg-purple px-6 py-3.5 text-base font-bold text-purple-foreground shadow-[0_16px_40px_color-mix(in_srgb,var(--purple)_28%,transparent)] transition hover:brightness-110"
+          >
             Get Started
           </button>
           <a
@@ -219,7 +227,7 @@ function WhyStudySpark() {
   )
 }
 
-function CTA() {
+function CTA({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
   return (
     <section className="px-5 pb-10 sm:px-8 sm:pb-16">
       <div className="mx-auto max-w-7xl rounded-2xl border border-purple/30 bg-purple/10 px-6 py-12 text-center shadow-[0_24px_80px_color-mix(in_srgb,var(--teal)_8%,transparent)] sm:px-10">
@@ -227,7 +235,10 @@ function CTA() {
         <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-black text-foreground sm:text-5xl">
           Start your study journey today.
         </h2>
-        <button className="mt-8 rounded-lg bg-teal px-6 py-3.5 text-base font-bold text-teal-foreground transition hover:brightness-110">
+        <button
+          onClick={() => onNavigate('dashboard')}
+          className="mt-8 rounded-lg bg-teal px-6 py-3.5 text-base font-bold text-teal-foreground transition hover:brightness-110"
+        >
           Get Started
         </button>
       </div>
@@ -236,14 +247,20 @@ function CTA() {
 }
 
 function App() {
+  const [view, setView] = useState<'landing' | 'dashboard'>('landing')
+
+  if (view === 'dashboard') {
+    return <DashboardPage onBack={() => setView('landing')} />
+  }
+
   return (
     <div className="min-h-screen overflow-hidden bg-background text-foreground">
-      <Navbar />
+      <Navbar onNavigate={setView} />
       <main>
-        <Hero />
+        <Hero onNavigate={setView} />
         <Features />
         <WhyStudySpark />
-        <CTA />
+        <CTA onNavigate={setView} />
       </main>
     </div>
   )
