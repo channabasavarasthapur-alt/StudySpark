@@ -7,6 +7,7 @@ import { Flame, Timer, Box, Trophy, Plus, FileText, Zap } from 'lucide-react'
 
 interface DashboardPageProps {
   onBack: () => void
+  onNavigate: (view: 'landing' | 'dashboard' | 'capsules') => void
 }
 
 const mockStats = [
@@ -35,7 +36,7 @@ const quotes = [
   "Success is the sum of small efforts, repeated day in and day out.",
 ]
 
-export default function DashboardPage({ onBack }: DashboardPageProps) {
+export default function DashboardPage({ onBack, onNavigate }: DashboardPageProps) {
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -48,7 +49,7 @@ export default function DashboardPage({ onBack }: DashboardPageProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:pl-64">
-      <Sidebar onBack={onBack} />
+      <Sidebar onBack={onBack} onNavigate={onNavigate} activeItem="Dashboard" />
 
       <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         {/* Welcome Section */}
