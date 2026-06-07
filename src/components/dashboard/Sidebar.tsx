@@ -3,17 +3,19 @@ import { ThemeToggle } from '../ThemeToggle'
 
 interface SidebarProps {
   onBack?: () => void
+  onNavigate?: (view: 'landing' | 'dashboard' | 'capsules') => void
+  activeItem?: string
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { icon: BookOpen, label: 'Study Capsules' },
-  { icon: CreditCard, label: 'Flashcards' },
-  { icon: GraduationCap, label: 'Exams' },
-  { icon: Settings, label: 'Settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' as const },
+  { icon: BookOpen, label: 'Study Capsules', view: 'capsules' as const },
+  { icon: CreditCard, label: 'Flashcards', view: 'dashboard' as const },
+  { icon: GraduationCap, label: 'Exams', view: 'dashboard' as const },
+  { icon: Settings, label: 'Settings', view: 'dashboard' as const },
 ]
 
-export function Sidebar({ onBack }: SidebarProps) {
+export function Sidebar({ onBack, onNavigate, activeItem = 'Dashboard' }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 hidden h-full w-64 flex-col border-r border-border bg-card lg:flex">
       <div className="flex items-center justify-between gap-3 px-6 py-8">
@@ -30,8 +32,9 @@ export function Sidebar({ onBack }: SidebarProps) {
         {navItems.map((item) => (
           <button
             key={item.label}
+            onClick={() => onNavigate?.(item.view)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-              item.active
+              activeItem === item.label
                 ? 'bg-purple/10 text-purple'
                 : 'text-muted hover:bg-muted/10 hover:text-foreground'
             }`}
