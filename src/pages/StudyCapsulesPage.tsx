@@ -21,7 +21,7 @@ import {
 
 interface StudyCapsulesPageProps {
   onBack: () => void
-  onNavigate: (view: 'landing' | 'dashboard' | 'capsules') => void
+  onNavigate: (view: 'landing' | 'dashboard' | 'capsules' | 'flashcards') => void
 }
 
 const mockRecentSubjects = [

@@ -3,14 +3,14 @@ import { ThemeToggle } from '../ThemeToggle'
 
 interface SidebarProps {
   onBack?: () => void
-  onNavigate?: (view: 'landing' | 'dashboard' | 'capsules') => void
+  onNavigate?: (view: 'landing' | 'dashboard' | 'capsules' | 'flashcards') => void
   activeItem?: string
 }
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' as const },
   { icon: BookOpen, label: 'Study Capsules', view: 'capsules' as const },
-  { icon: CreditCard, label: 'Flashcards', view: 'dashboard' as const },
+  { icon: CreditCard, label: 'Flashcards', view: 'flashcards' as const },
   { icon: GraduationCap, label: 'Exams', view: 'dashboard' as const },
   { icon: Settings, label: 'Settings', view: 'dashboard' as const },
 ]

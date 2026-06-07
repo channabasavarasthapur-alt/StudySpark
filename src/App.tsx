@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ThemeToggle } from './components/ThemeToggle'
 import DashboardPage from './pages/DashboardPage'
 import StudyCapsulesPage from './pages/StudyCapsulesPage'
+import FlashcardsPage from './pages/FlashcardsPage'
 
 const features = [
   {
@@ -248,7 +249,7 @@ function CTA({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => vo
 }
 
 function App() {
-  const [view, setView] = useState<'landing' | 'dashboard' | 'capsules'>('landing')
+  const [view, setView] = useState<'landing' | 'dashboard' | 'capsules' | 'flashcards'>('landing')
 
   if (view === 'dashboard') {
     return <DashboardPage onBack={() => setView('landing')} onNavigate={setView} />
@@ -256,6 +257,10 @@ function App() {
 
   if (view === 'capsules') {
     return <StudyCapsulesPage onBack={() => setView('landing')} onNavigate={setView} />
+  }
+
+  if (view === 'flashcards') {
+    return <FlashcardsPage onBack={() => setView('landing')} onNavigate={setView} />
   }
 
   return (

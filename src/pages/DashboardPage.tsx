@@ -7,7 +7,7 @@ import { Flame, Timer, Box, Trophy, Plus, FileText, Zap } from 'lucide-react'
 
 interface DashboardPageProps {
   onBack: () => void
-  onNavigate: (view: 'landing' | 'dashboard' | 'capsules') => void
+  onNavigate: (view: 'landing' | 'dashboard' | 'capsules' | 'flashcards') => void
 }
 
 const mockStats = [
