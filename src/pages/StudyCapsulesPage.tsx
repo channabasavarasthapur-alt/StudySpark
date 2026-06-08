@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Sidebar } from '../components/dashboard/Sidebar'
 import { CapsuleCard } from '../components/capsules/CapsuleCard'
 import { InsightCard } from '../components/capsules/InsightCard'
-import { ProgressCard } from '../components/capsules/ProgressCard'
+import { ProgressCard } from '../components/ui/ProgressCard'
 import { SubjectCard } from '../components/capsules/SubjectCard'
 import {
   Sparkles,
@@ -21,7 +21,7 @@ import {
 
 interface StudyCapsulesPageProps {
   onBack: () => void
-  onNavigate: (view: 'landing' | 'dashboard' | 'capsules' | 'flashcards') => void
+  onNavigate: (view: 'landing' | 'dashboard' | 'capsules') => void
 }
 
 const mockRecentSubjects = [
@@ -79,7 +79,7 @@ export default function StudyCapsulesPage({ onBack, onNavigate }: StudyCapsulesP
     <div className="min-h-screen bg-background text-foreground lg:pl-64">
       <Sidebar onBack={onBack} onNavigate={onNavigate} activeItem="Study Capsules" />
 
-      <main className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
+      <main className="mx-auto max-w-7xl px-5 pt-24 pb-12 sm:px-8 lg:pt-12">
         {/* Hero Section */}
         <header className="relative mb-20 text-center">
           <div className="absolute left-1/2 top-0 -z-10 h-64 w-full -translate-x-1/2 rounded-full bg-purple/10 blur-[120px]" />

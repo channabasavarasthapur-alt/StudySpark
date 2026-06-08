@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ThemeToggle } from './components/ThemeToggle'
 import DashboardPage from './pages/DashboardPage'
 import StudyCapsulesPage from './pages/StudyCapsulesPage'
-import FlashcardsPage from './pages/FlashcardsPage'
+import { Button } from './components/ui/Button'
+import type { View } from './types/navigation'
 
 const features = [
   {
@@ -41,7 +42,7 @@ const stats = [
   { label: 'Days left', value: '12' },
 ]
 
-function Navbar({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
+function Navbar({ onNavigate }: { onNavigate: (view: View) => void }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
@@ -63,12 +64,9 @@ function Navbar({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') =>
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:border-teal hover:text-teal"
-          >
+          <Button variant="outline" size="sm" onClick={() => onNavigate('dashboard')}>
             Login
-          </button>
+          </Button>
         </div>
       </nav>
     </header>
@@ -128,7 +126,7 @@ function ProductVisual() {
   )
 }
 
-function Hero({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
+function Hero({ onNavigate }: { onNavigate: (view: View) => void }) {
   return (
     <section
       id="top"
@@ -139,21 +137,18 @@ function Hero({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => v
           Active recall for modern students
         </div>
         <h1 className="max-w-4xl text-5xl font-black leading-[1.02] text-foreground sm:text-6xl lg:text-7xl">
-          Study Smarter, Not Harder
+          Study Smarter, <br className="hidden sm:block" /> Not Harder
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-          Transform notes into active recall and boost your learning.
+          Transform notes into active recall and boost your learning with Study Capsules and intelligent flashcards.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="rounded-lg bg-purple px-6 py-3.5 text-base font-bold text-purple-foreground shadow-[0_16px_40px_color-mix(in_srgb,var(--purple)_28%,transparent)] transition hover:brightness-110"
-          >
+          <Button onClick={() => onNavigate('dashboard')}>
             Get Started
-          </button>
+          </Button>
           <a
             href="#features"
-            className="rounded-lg border border-border bg-card px-6 py-3.5 text-center text-base font-bold text-foreground transition hover:border-teal hover:text-teal"
+            className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3.5 text-base font-bold text-foreground transition hover:border-teal hover:text-teal active:scale-[0.98]"
           >
             Explore Features
           </a>
@@ -229,7 +224,7 @@ function WhyStudySpark() {
   )
 }
 
-function CTA({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => void }) {
+function CTA({ onNavigate }: { onNavigate: (view: View) => void }) {
   return (
     <section className="px-5 pb-10 sm:px-8 sm:pb-16">
       <div className="mx-auto max-w-7xl rounded-2xl border border-purple/30 bg-purple/10 px-6 py-12 text-center shadow-[0_24px_80px_color-mix(in_srgb,var(--teal)_8%,transparent)] sm:px-10">
@@ -237,19 +232,16 @@ function CTA({ onNavigate }: { onNavigate: (view: 'landing' | 'dashboard') => vo
         <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-black text-foreground sm:text-5xl">
           Start your study journey today.
         </h2>
-        <button
-          onClick={() => onNavigate('dashboard')}
-          className="mt-8 rounded-lg bg-teal px-6 py-3.5 text-base font-bold text-teal-foreground transition hover:brightness-110"
-        >
+        <Button className="mt-8" variant="secondary" onClick={() => onNavigate('dashboard')}>
           Get Started
-        </button>
+        </Button>
       </div>
     </section>
   )
 }
 
 function App() {
-  const [view, setView] = useState<'landing' | 'dashboard' | 'capsules' | 'flashcards'>('landing')
+  const [view, setView] = useState<View>('landing')
 
   if (view === 'dashboard') {
     return <DashboardPage onBack={() => setView('landing')} onNavigate={setView} />
@@ -257,10 +249,6 @@ function App() {
 
   if (view === 'capsules') {
     return <StudyCapsulesPage onBack={() => setView('landing')} onNavigate={setView} />
-  }
-
-  if (view === 'flashcards') {
-    return <FlashcardsPage onBack={() => setView('landing')} onNavigate={setView} />
   }
 
   return (
