@@ -51,7 +51,7 @@ export default function DashboardPage({ onBack, onNavigate }: DashboardPageProps
     <div className="min-h-screen bg-background text-foreground lg:pl-64">
       <Sidebar onBack={onBack} onNavigate={onNavigate} activeItem="Dashboard" />
 
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+      <main className="mx-auto max-w-7xl px-5 pt-24 pb-8 sm:px-8 lg:pt-8">
         {/* Welcome Section */}
         <header className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
           <div>
@@ -70,20 +70,20 @@ export default function DashboardPage({ onBack, onNavigate }: DashboardPageProps
         </header>
 
         {/* Stats Grid */}
-        <section className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mb-12 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
           {mockStats.map((stat) => (
             <StatsCard key={stat.label} {...stat} />
           ))}
         </section>
 
-        <div className="grid gap-10 lg:grid-cols-[1fr_0.4fr]">
+        <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
           {/* Left Column: Recent Capsules */}
           <section>
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-black text-foreground">Recent Study Capsules</h2>
               <button className="text-sm font-bold text-purple hover:underline">View all</button>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               {recentCapsules.map((capsule) => (
                 <CapsuleCard key={capsule.title} {...capsule} />
               ))}
@@ -107,8 +107,8 @@ export default function DashboardPage({ onBack, onNavigate }: DashboardPageProps
               <h2 className="mb-6 text-2xl font-black text-foreground">Quick Actions</h2>
               <div className="grid gap-4">
                 <QuickAction label="Start Focus Session" icon={Zap} color="purple" />
-                <QuickAction label="Practice Flashcards" icon={FileText} color="teal" />
-                <QuickAction label="Create New Quiz" icon={Plus} color="purple" />
+                <QuickAction label="Generate Quiz" icon={FileText} color="teal" />
+                <QuickAction label="Create New Task" icon={Plus} color="purple" />
               </div>
             </section>
           </div>
