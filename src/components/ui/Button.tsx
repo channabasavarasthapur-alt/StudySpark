@@ -19,7 +19,7 @@ export function Button({
   disabled = false,
   type = 'button',
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center rounded-xl font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed'
+  const baseStyles = 'inline-flex items-center justify-center rounded-xl font-bold transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-purple/50 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed'
 
   const variants = {
     primary: 'bg-purple text-purple-foreground shadow-[0_16px_40px_color-mix(in_srgb,var(--purple)_28%,transparent)] hover:brightness-110',
