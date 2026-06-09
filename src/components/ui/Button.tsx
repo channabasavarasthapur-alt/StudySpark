@@ -19,13 +19,13 @@ export function Button({
   disabled = false,
   type = 'button',
 }: ButtonProps) {
-  const baseStyles = 'relative inline-flex items-center justify-center rounded-2xl font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-purple/40 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed overflow-hidden group'
+  const baseStyles = 'relative inline-flex items-center justify-center rounded-2xl font-bold tracking-tight transition-all duration-300 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-purple/40 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed overflow-hidden group'
 
   const variants = {
-    primary: 'bg-foreground text-background hover:opacity-90',
-    secondary: 'bg-purple text-purple-foreground hover:brightness-110 shadow-lg shadow-purple/20',
-    outline: 'border border-border bg-transparent text-foreground hover:bg-foreground/5',
-    ghost: 'text-muted hover:text-foreground hover:bg-foreground/5',
+    primary: 'bg-foreground text-background hover:opacity-90 hover:shadow-xl hover:shadow-foreground/10 hover:-translate-y-0.5',
+    secondary: 'bg-purple text-purple-foreground hover:brightness-110 shadow-lg shadow-purple/20 hover:shadow-purple/30 hover:-translate-y-0.5',
+    outline: 'border border-border bg-transparent text-foreground hover:bg-foreground/5 hover:border-foreground/20',
+    ghost: 'text-muted hover:text-foreground hover:bg-foreground/5 hover:-translate-y-0.5',
     glass: 'glass text-foreground hover:bg-white/10 dark:hover:bg-white/5',
   }
 

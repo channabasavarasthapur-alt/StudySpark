@@ -2,7 +2,7 @@ import type { View } from '../types/navigation'
 import { BentoCard } from '../components/ui/BentoCard'
 import { Button } from '../components/ui/Button'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { Flame, Timer, Zap, Plus, FileText, ArrowRight, Calendar, Box } from 'lucide-react'
+import { Flame, Timer, Zap, Plus, FileText, ArrowRight, Calendar, Box, ArrowLeft } from 'lucide-react'
 
 interface DashboardPageProps {
   onNavigate: (view: View) => void
@@ -16,20 +16,24 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
   })
 
   return (
-    <div className="min-h-screen bg-background pb-32 transition-colors duration-500">
+    <div className="min-h-screen bg-background pb-40 transition-colors duration-500">
       {/* Dynamic Header */}
-      <header className="mx-auto max-w-7xl px-6 pt-12 lg:pt-16">
-        <div className="flex justify-end mb-4">
+      <header className="mx-auto max-w-7xl px-6 pt-8 lg:pt-12">
+        <div className="flex items-center justify-between mb-8">
+          <Button variant="ghost" size="sm" onClick={() => onNavigate('landing')} className="gap-2">
+            <ArrowLeft size={16} />
+            Back
+          </Button>
           <ThemeToggle />
         </div>
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted">{currentDate}</p>
             <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl lg:text-7xl">
-              Good morning, <span className="text-gradient">Alex.</span>
+              Welcome back, <span className="text-gradient">Alex.</span>
             </h1>
-            <p className="mt-4 max-w-lg text-lg text-muted">
-              You have <span className="font-bold text-foreground">3 exams</span> coming up this week. Ready to lock in?
+            <p className="mt-4 max-w-lg text-lg text-muted/80 font-medium">
+              You're currently in the <span className="text-foreground font-bold">top 5%</span> of learners this week. 3 exams approaching. Time to execute.
             </p>
           </div>
           <div className="flex shrink-0 gap-3 animate-in fade-in slide-in-from-right-4 duration-700">
@@ -58,6 +62,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
               { title: 'Organic Chemistry Review', time: '45m', status: 'In Progress', progress: 65 },
               { title: 'Macroeconomics Quiz', time: '20m', status: 'Up Next', progress: 0 },
               { title: 'Biology Lab Notes', time: '15m', status: 'Waiting', progress: 0 },
+              { title: 'Calculus Problem Set', time: '30m', status: 'Completed', progress: 100 },
             ].map((task, idx) => (
               <div
                 key={task.title}
@@ -65,11 +70,17 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                 style={{ animationDelay: `${idx * 100 + 300}ms` }}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`size-10 rounded-xl border border-border flex items-center justify-center font-bold text-[10px] ${task.progress > 0 ? 'bg-purple text-purple-foreground border-purple' : 'bg-card text-muted'}`}>
-                    {task.progress > 0 ? `${task.progress}%` : 'GO'}
+                  <div className={`size-10 rounded-xl border border-border flex items-center justify-center font-bold text-[10px] transition-all duration-500 ${
+                    task.progress === 100
+                      ? 'bg-teal text-teal-foreground border-teal'
+                      : task.progress > 0
+                        ? 'bg-purple text-purple-foreground border-purple'
+                        : 'bg-card text-muted'
+                  }`}>
+                    {task.progress === 100 ? <Zap size={14} fill="currentColor" /> : task.progress > 0 ? `${task.progress}%` : 'GO'}
                   </div>
                   <div>
-                    <h4 className="font-bold text-foreground">{task.title}</h4>
+                    <h4 className={`font-bold text-foreground transition-all ${task.status === 'Completed' ? 'line-through opacity-40' : ''}`}>{task.title}</h4>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{task.time} • {task.status}</p>
                   </div>
                 </div>
