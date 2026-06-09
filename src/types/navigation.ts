@@ -1,1 +1,1 @@
-export type View = 'landing' | 'dashboard' | 'capsules'
+export type View = 'landing' | 'dashboard' | 'capsules' | 'exams' | 'setup'

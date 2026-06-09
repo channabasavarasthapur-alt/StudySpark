@@ -1,265 +1,225 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ThemeToggle } from './components/ThemeToggle'
 import DashboardPage from './pages/DashboardPage'
 import StudyCapsulesPage from './pages/StudyCapsulesPage'
 import { Button } from './components/ui/Button'
+import { BentoCard } from './components/ui/BentoCard'
+import { Dock } from './components/layout/Dock'
 import type { View } from './types/navigation'
-
-const features = [
-  {
-    title: 'Study Capsules',
-    description: 'Turn each topic into a focused learning sprint with goals, resources, and progress in one place.',
-  },
-  {
-    title: 'Notes',
-    description: 'Capture ideas quickly and keep your course material organized around what matters next.',
-  },
-  {
-    title: 'Flashcards',
-    description: 'Practice definitions, formulas, and concepts with recall-first cards built for repetition.',
-  },
-  {
-    title: 'Quiz Generation',
-    description: 'Convert notes into targeted checks that reveal what you understand and what needs another pass.',
-  },
-  {
-    title: 'Pomodoro Timer',
-    description: 'Stay locked in with structured focus blocks and restorative breaks between study sessions.',
-  },
-  {
-    title: 'Exam Countdown',
-    description: 'See upcoming deadlines clearly so revision plans stay realistic, calm, and on schedule.',
-  },
-  {
-    title: 'Study Streaks',
-    description: 'Build consistency with visible momentum that makes showing up feel rewarding.',
-  },
-]
-
-const stats = [
-  { label: 'Recall score', value: '86%' },
-  { label: 'Focus block', value: '24m' },
-  { label: 'Days left', value: '12' },
-]
-
-function Navbar({ onNavigate }: { onNavigate: (view: View) => void }) {
-  return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <a href="#top" className="flex min-w-0 items-center gap-3" aria-label="StudySpark home">
-          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-purple text-lg font-black text-purple-foreground shadow-[0_0_32px_color-mix(in_srgb,var(--purple)_45%,transparent)]">
-            S
-          </span>
-          <span className="truncate text-lg font-semibold text-foreground">StudySpark</span>
-        </a>
-
-        <div className="hidden items-center gap-8 text-sm font-medium text-muted md:flex">
-          <a className="transition hover:text-foreground" href="#features">
-            Features
-          </a>
-          <a className="transition hover:text-foreground" href="#about">
-            About
-          </a>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Button variant="outline" size="sm" onClick={() => onNavigate('dashboard')}>
-            Login
-          </Button>
-        </div>
-      </nav>
-    </header>
-  )
-}
-
-function ProductVisual() {
-  return (
-    <div className="relative mx-auto w-full max-w-xl">
-      <div className="absolute -inset-6 rounded-[2rem] bg-purple/20 blur-3xl" />
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card/95 p-4 shadow-2xl shadow-slate-950/10">
-        <div className="mb-4 flex items-center justify-between gap-4 border-b border-border pb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-teal">Today&apos;s plan</p>
-            <h2 className="mt-1 text-xl font-semibold text-foreground">Biology Active Recall</h2>
-          </div>
-          <div className="rounded-lg bg-teal/10 px-3 py-2 text-sm font-bold text-teal">Streak 14</div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-border bg-background/60 p-4">
-              <p className="text-xs text-muted">{stat.label}</p>
-              <p className="mt-2 text-2xl font-bold text-foreground">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border bg-background/60 p-4">
-          <div className="mb-3 flex items-center justify-between gap-4">
-            <p className="font-semibold text-foreground">Flashcard queue</p>
-            <span className="rounded-md bg-purple/15 px-2.5 py-1 text-xs font-semibold text-purple">
-              42 cards
-            </span>
-          </div>
-          <div className="space-y-3">
-            <div className="h-3 rounded-full bg-purple" />
-            <div className="h-3 w-10/12 rounded-full bg-teal" />
-            <div className="h-3 w-7/12 rounded-full bg-muted/30" />
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-xl border border-purple/25 bg-purple/10 p-4">
-            <p className="text-sm font-semibold text-purple">Quiz ready</p>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Cell respiration, enzymes, and transport questions generated from your notes.
-            </p>
-          </div>
-          <div className="rounded-xl border border-teal/25 bg-teal/10 p-4">
-            <p className="text-sm font-semibold text-teal">Next exam</p>
-            <p className="mt-2 text-3xl font-bold text-foreground">Jun 17</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Hero({ onNavigate }: { onNavigate: (view: View) => void }) {
-  return (
-    <section
-      id="top"
-      className="mx-auto grid min-h-[calc(100svh-73px)] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1fr_0.92fr] lg:py-20"
-    >
-      <div>
-        <div className="mb-6 inline-flex items-center rounded-lg border border-teal/30 bg-teal/10 px-3 py-1.5 text-sm font-semibold text-teal">
-          Active recall for modern students
-        </div>
-        <h1 className="max-w-4xl text-5xl font-black leading-[1.02] text-foreground sm:text-6xl lg:text-7xl">
-          Study Smarter, <br className="hidden sm:block" /> Not Harder
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-          Transform notes into active recall and boost your learning with Study Capsules and intelligent flashcards.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button onClick={() => onNavigate('dashboard')}>
-            Get Started
-          </Button>
-          <a
-            href="#features"
-            className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3.5 text-base font-bold text-foreground transition hover:border-teal hover:text-teal active:scale-[0.98]"
-          >
-            Explore Features
-          </a>
-        </div>
-      </div>
-      <ProductVisual />
-    </section>
-  )
-}
-
-function Features() {
-  return (
-    <section id="features" className="border-y border-border bg-card/45 px-5 py-20 sm:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-widest text-purple">Features</p>
-          <h2 className="mt-3 text-3xl font-black text-foreground sm:text-4xl">
-            Everything your study system needs.
-          </h2>
-          <p className="mt-4 text-lg leading-8 text-muted">
-            StudySpark keeps planning, practice, focus, and momentum together in one clean workspace.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            <article
-              key={feature.title}
-              className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-purple/50 hover:shadow-xl hover:shadow-purple/10"
-            >
-              <div className="mb-5 grid size-11 place-items-center rounded-lg bg-teal/10 text-sm font-black text-teal">
-                {String(index + 1).padStart(2, '0')}
-              </div>
-              <h3 className="text-xl font-bold text-foreground">{feature.title}</h3>
-              <p className="mt-3 leading-7 text-muted">{feature.description}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function WhyStudySpark() {
-  return (
-    <section id="about" className="px-5 py-20 sm:px-8">
-      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1fr] lg:items-center">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-widest text-teal">Why StudySpark</p>
-          <h2 className="mt-3 text-3xl font-black text-foreground sm:text-4xl">
-            Learning sticks when you retrieve it.
-          </h2>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-          <p className="text-lg leading-8 text-muted">
-            Active recall strengthens memory by asking your brain to pull information out instead of passively reading it again.
-            StudySpark turns notes into flashcards, quizzes, and focused review sessions so students can find weak spots early,
-            practice deliberately, and walk into exams with more confidence.
-          </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {['Retrieve', 'Review', 'Retain'].map((step) => (
-              <div
-                key={step}
-                className="rounded-lg border border-teal/20 bg-teal/10 px-4 py-3 text-center font-bold text-teal"
-              >
-                {step}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CTA({ onNavigate }: { onNavigate: (view: View) => void }) {
-  return (
-    <section className="px-5 pb-10 sm:px-8 sm:pb-16">
-      <div className="mx-auto max-w-7xl rounded-2xl border border-purple/30 bg-purple/10 px-6 py-12 text-center shadow-[0_24px_80px_color-mix(in_srgb,var(--teal)_8%,transparent)] sm:px-10">
-        <p className="text-sm font-bold uppercase tracking-widest text-teal">Ready when you are</p>
-        <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-black text-foreground sm:text-5xl">
-          Start your study journey today.
-        </h2>
-        <Button className="mt-8" variant="secondary" onClick={() => onNavigate('dashboard')}>
-          Get Started
-        </Button>
-      </div>
-    </section>
-  )
-}
+import { Sparkles, Brain, Zap, Clock, Trophy, MousePointer2, ArrowRight } from 'lucide-react'
 
 function App() {
   const [view, setView] = useState<View>('landing')
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   if (view === 'dashboard') {
-    return <DashboardPage onBack={() => setView('landing')} onNavigate={setView} />
+    return (
+      <>
+        <DashboardPage onNavigate={setView} />
+        <Dock activeView={view} onNavigate={setView} />
+      </>
+    )
   }
 
   if (view === 'capsules') {
-    return <StudyCapsulesPage onBack={() => setView('landing')} onNavigate={setView} />
+    return (
+      <>
+        <StudyCapsulesPage onNavigate={setView} />
+        <Dock activeView={view} onNavigate={setView} />
+      </>
+    )
+  }
+
+  if (view === 'exams' || view === 'setup') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <div className="text-center">
+          <h2 className="text-3xl font-black uppercase tracking-tighter sm:text-5xl">Coming Soon</h2>
+          <p className="mt-4 text-muted">This module is under development for V1.1</p>
+          <Button className="mt-8" onClick={() => setView('dashboard')}>Back to Dashboard</Button>
+        </div>
+        <Dock activeView={view} onNavigate={setView} />
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-background text-foreground">
-      <Navbar onNavigate={setView} />
-      <main>
-        <Hero onNavigate={setView} />
-        <Features />
-        <WhyStudySpark />
-        <CTA onNavigate={setView} />
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+      {/* Premium Navbar */}
+      <nav
+        className={`fixed inset-x-0 top-0 z-50 flex h-20 items-center transition-all duration-300 ${
+          scrolled ? 'border-b border-border bg-background/80 backdrop-blur-xl' : 'bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-foreground text-background font-black">S</div>
+            <span className="text-xl font-bold tracking-tight">StudySpark</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={() => setView('dashboard')}>
+              Log in
+            </Button>
+            <Button size="sm" onClick={() => setView('dashboard')}>
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="relative pt-20">
+        {/* Background Gradients */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 left-1/4 size-[500px] rounded-full bg-purple/10 blur-[120px]" />
+          <div className="absolute top-1/2 right-1/4 size-[400px] rounded-full bg-teal/5 blur-[100px]" />
+        </div>
+
+        {/* Hero Section */}
+        <section className="relative mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
+          <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 backdrop-blur-md">
+            <Sparkles size={14} className="text-purple" />
+            <span className="text-xs font-bold uppercase tracking-widest text-muted">Intelligent Learning for V1</span>
+          </div>
+
+          <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.1] tracking-tight sm:text-7xl lg:text-8xl">
+            Master anything <br />
+            <span className="text-gradient">with magic speed.</span>
+          </h1>
+
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-muted sm:text-xl leading-relaxed">
+            Stop passive reading. StudySpark transforms your messy notes into structured, active recall systems in seconds. High stakes, low stress.
+          </p>
+
+          <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button size="lg" onClick={() => setView('dashboard')} className="w-full sm:w-auto">
+              Start Studying Free
+            </Button>
+            <Button variant="ghost" size="lg" className="w-full sm:w-auto group">
+              Watch Demo
+              <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
+
+          <div className="mt-20 flex flex-wrap justify-center gap-8 opacity-40 grayscale transition hover:grayscale-0 hover:opacity-100 duration-700">
+            {['Trusted by students at', 'Stanford', 'MIT', 'Oxford', 'NUS'].map((uni) => (
+              <span key={uni} className="text-sm font-bold tracking-widest uppercase">{uni}</span>
+            ))}
+          </div>
+        </section>
+
+        {/* Bento Showcase */}
+        <section className="mx-auto max-w-7xl px-6 py-20 lg:py-32">
+          <div className="mb-16 text-center lg:text-left">
+            <h2 className="text-3xl font-black sm:text-4xl lg:text-5xl">Everything you need. <br />Nothing you don't.</h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-12 md:grid-rows-2">
+            <BentoCard
+              className="md:col-span-8"
+              title="Study Capsules"
+              description="Context-aware summaries and insights from any content."
+              icon={<Brain size={20} />}
+              badge="Core Engine"
+            >
+              <div className="mt-8 grid grid-cols-2 gap-4 overflow-hidden">
+                <div className="rounded-2xl border border-border bg-background/50 p-4 animate-float">
+                  <div className="h-2 w-1/2 rounded-full bg-purple/30 mb-2" />
+                  <div className="h-2 w-3/4 rounded-full bg-foreground/10" />
+                </div>
+                <div className="rounded-2xl border border-border bg-background/50 p-4 delay-150 animate-float">
+                  <div className="h-2 w-1/3 rounded-full bg-teal/30 mb-2" />
+                  <div className="h-2 w-2/3 rounded-full bg-foreground/10" />
+                </div>
+              </div>
+            </BentoCard>
+
+            <BentoCard
+              className="md:col-span-4"
+              title="Flash Generation"
+              description="Instant recall cards from PDFs or notes."
+              icon={<Zap size={20} />}
+            >
+              <div className="mt-8 flex justify-center">
+                <div className="relative size-24 rounded-2xl border-2 border-dashed border-border flex items-center justify-center">
+                  <MousePointer2 size={20} className="text-muted" />
+                </div>
+              </div>
+            </BentoCard>
+
+            <BentoCard
+              className="md:col-span-4"
+              title="Focus Cycles"
+              description="Custom pomodoro timers integrated with your task list."
+              icon={<Clock size={20} />}
+            >
+              <div className="mt-8 text-center">
+                <span className="text-4xl font-black tabular-nums">25:00</span>
+              </div>
+            </BentoCard>
+
+            <BentoCard
+              className="md:col-span-8"
+              title="Progress Tracking"
+              description="Visual momentum that makes consistency addictive."
+              icon={<Trophy size={20} />}
+              badge="Motivation"
+            >
+              <div className="mt-8 flex items-end gap-2 h-20">
+                {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 bg-gradient-to-t from-purple to-teal rounded-t-lg transition-all duration-500 hover:opacity-80"
+                    style={{ height: `${h}%` }}
+                  />
+                ))}
+              </div>
+            </BentoCard>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="mx-auto max-w-7xl px-6 py-32 text-center">
+          <div className="glass-morphism relative overflow-hidden rounded-[3rem] px-8 py-20 sm:px-16">
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple/10 via-transparent to-teal/10" />
+            <div className="relative z-10">
+              <h2 className="text-4xl font-black sm:text-6xl">Unlock your potential.</h2>
+              <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
+                Join thousands of students who are learning faster and remembering more.
+              </p>
+              <Button size="lg" onClick={() => setView('dashboard')} className="mt-10">
+                Get Started for Free
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-border py-12 px-6">
+          <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background font-black text-sm">S</div>
+              <span className="text-sm font-bold tracking-tight">StudySpark</span>
+            </div>
+            <p className="text-xs text-muted">© 2024 StudySpark. Built for the modern mind.</p>
+            <div className="flex gap-6 text-xs font-bold uppercase tracking-widest text-muted">
+              <a href="#" className="hover:text-foreground">Twitter</a>
+              <a href="#" className="hover:text-foreground">Discord</a>
+              <a href="#" className="hover:text-foreground">Privacy</a>
+            </div>
+          </div>
+        </footer>
       </main>
+
+      {/* Floating Dock (Only when not in landing, but added here for the layout consistency) */}
+      {view !== 'landing' && <Dock activeView={view} onNavigate={setView} />}
     </div>
   )
 }
