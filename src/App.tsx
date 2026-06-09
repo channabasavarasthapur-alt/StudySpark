@@ -89,13 +89,13 @@ function App() {
             <span className="text-xs font-bold uppercase tracking-widest text-muted">Intelligent Learning for V1</span>
           </div>
 
-          <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.1] tracking-tight sm:text-7xl lg:text-8xl">
-            Master anything <br />
-            <span className="text-gradient">with magic speed.</span>
+          <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl">
+            Master any subject <br />
+            <span className="text-gradient">with surgical precision.</span>
           </h1>
 
-          <p className="mx-auto mt-8 max-w-2xl text-lg text-muted sm:text-xl leading-relaxed">
-            Stop passive reading. StudySpark transforms your messy notes into structured, active recall systems in seconds. High stakes, low stress.
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-muted/80 sm:text-xl leading-relaxed font-medium smart-board-text">
+            Turn static notes into active intelligence. StudySpark transforms raw content into high-retention capsules for the modern competitive student.
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">

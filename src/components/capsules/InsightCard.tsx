@@ -6,9 +6,10 @@ interface InsightCardProps {
   icon: LucideIcon
   description: string
   color: 'purple' | 'teal'
+  progress?: number
 }
 
-export function InsightCard({ label, value, icon: Icon, description, color }: InsightCardProps) {
+export function InsightCard({ label, value, icon: Icon, description, color, progress }: InsightCardProps) {
   const colorClasses = {
     purple: 'text-purple bg-purple/10 border-purple/20 shadow-purple/5',
     teal: 'text-teal bg-teal/10 border-teal/20 shadow-teal/5'
@@ -25,7 +26,17 @@ export function InsightCard({ label, value, icon: Icon, description, color }: In
           <p className="text-2xl font-black text-foreground">{value}</p>
         </div>
       </div>
-      <p className="mt-4 text-sm text-muted leading-relaxed">
+      {progress !== undefined && (
+        <div className="mt-4">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/10">
+            <div
+              className={`h-full transition-all duration-1000 ${color === 'purple' ? 'bg-purple' : 'bg-teal'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+      <p className="mt-4 text-sm text-muted leading-relaxed font-medium">
         {description}
       </p>
     </div>

@@ -18,7 +18,7 @@ export function BentoCard({
   badge,
 }: BentoCardProps) {
   return (
-    <div className={`group relative overflow-hidden rounded-3xl border border-border bg-card p-6 bento-shadow transition-all duration-300 hover:border-purple/30 ${className}`}>
+    <div className={`group relative overflow-hidden rounded-3xl border border-border bg-card p-6 bento-shadow transition-all duration-500 hover:border-purple/30 hover:shadow-2xl hover:shadow-purple/5 hover:-translate-y-1 ${className}`}>
       {/* Background Decor */}
       <div className="absolute -right-10 -top-10 size-40 rounded-full bg-purple/5 blur-3xl transition-all group-hover:bg-purple/10" />
 
