@@ -1,4 +1,5 @@
 import { LayoutDashboard, BookOpen, GraduationCap, Settings, Home } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { View } from '../../types/navigation'
 
 interface DockProps {
@@ -7,7 +8,7 @@ interface DockProps {
 }
 
 export function Dock({ activeView, onNavigate }: DockProps) {
-  const items: { id: View; icon: any; label: string }[] = [
+  const items: { id: View; icon: LucideIcon; label: string }[] = [
     { id: 'landing', icon: Home, label: 'Home' },
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dash' },
     { id: 'capsules', icon: BookOpen, label: 'Caps' },

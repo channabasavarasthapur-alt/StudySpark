@@ -32,11 +32,11 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [showCapsule, setShowCapsule] = useState(false)
 
   const loadingMessages = [
-    "Analyzing core semantics...",
-    "Extracting key concepts...",
-    "Synthesizing recall patterns...",
-    "Generating logic maps...",
-    "Finalizing your capsule..."
+    "Reading your notes...",
+    "Finding key concepts...",
+    "Making main points...",
+    "Organizing formulas...",
+    "Almost done..."
   ]
 
   const handleGenerate = () => {
@@ -70,13 +70,13 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
         </div>
         <div className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-purple/20 bg-purple/5 px-4 py-1.5 backdrop-blur-md">
           <Sparkles size={14} className="text-purple" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-purple">AI Synthesis v1.0</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-purple">Smart Study v1.0</span>
         </div>
         <h1 className="text-4xl font-black tracking-tight sm:text-6xl lg:text-7xl">
-          Create a <button className="text-gradient hover:opacity-80 transition-opacity cursor-pointer" onClick={() => onNavigate('dashboard')}>Capsule.</button>
+          Make a <button className="text-gradient hover:opacity-80 transition-opacity cursor-pointer" onClick={() => onNavigate('dashboard')}>Capsule.</button>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted/80 font-medium">
-          Upload your notes, PDFs, or research links. We'll help you extract core concepts into a structured study format.
+          Paste your notes or book chapters. We'll help you get the main points in a neat study format.
         </p>
       </header>
 
@@ -111,7 +111,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                   ) : (
                     <>
                       <Zap size={18} fill="currentColor" />
-                      Synthesize
+                      Make Capsule
                     </>
                   )}
                 </Button>
@@ -133,8 +133,8 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                     <BookOpen size={40} className="text-muted/40" />
                   </div>
                </div>
-               <h3 className="text-xl font-bold text-foreground/40">Ready to Synthesize</h3>
-               <p className="mt-2 max-w-xs text-sm font-medium text-muted/60 leading-relaxed uppercase tracking-widest">Your optimized study material will appear here once you press synthesize.</p>
+               <h3 className="text-xl font-bold text-foreground/40">Ready to Start</h3>
+               <p className="mt-2 max-w-xs text-sm font-medium text-muted/60 leading-relaxed uppercase tracking-widest">Your neat study notes will appear here once you press "Make Capsule".</p>
             </div>
           )}
 
@@ -177,10 +177,10 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                   <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
                   <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
                     <InsightCard
-                      label="Session Score"
+                      label="Study Score"
                       value="--"
                       icon={Brain}
-                      description="Metrics will calculate after your first active session."
+                      description="Score will show after you start studying."
                       color="purple"
                       progress={0}
                     />
@@ -188,7 +188,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                       label="Understanding"
                       value="High"
                       icon={BarChart3}
-                      description="You've mastered core concepts."
+                      description="You've understood the main points."
                       color="teal"
                       progress={88}
                     />
@@ -196,13 +196,13 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                       label="Revision"
                       value="Low"
                       icon={AlertCircle}
-                      description="Priority is set to maintenance."
+                      description="No need to revise immediately."
                       color="teal"
                       progress={12}
                     />
                     <InsightCard
                       label="Status"
-                      value="Synced"
+                      value="Saved"
                       icon={CheckCircle2}
                       description="Capsule added to your library."
                       color="purple"
