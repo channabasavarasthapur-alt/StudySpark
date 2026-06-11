@@ -30,10 +30,10 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted">{currentDate}</p>
             <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl lg:text-7xl">
-              Welcome back, <span className="text-gradient">Alex.</span>
+              Welcome back, <span className="text-gradient">Guest.</span>
             </h1>
             <p className="mt-4 max-w-lg text-lg text-muted/80 font-medium">
-              You're currently in the <span className="text-foreground font-bold">top 5%</span> of learners this week. 3 exams approaching. Time to execute.
+              You have <span className="text-foreground font-bold">3 items</span> on your focus list today. All systems operational.
             </p>
           </div>
           <div className="flex shrink-0 gap-3 animate-in fade-in slide-in-from-right-4 duration-700">
@@ -98,34 +98,34 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Stats Bento */}
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
-          title="Streak"
+          title="Session Streak"
           icon={<Flame className="text-orange-500" />}
         >
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-5xl font-black">14</span>
-            <span className="text-[10px] font-black text-muted uppercase tracking-widest">Days</span>
+          <div className="mt-4 flex items-baseline gap-2 text-muted/50">
+            <span className="text-5xl font-black">--</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">Days</span>
           </div>
-          <p className="mt-2 text-[10px] text-muted font-bold uppercase tracking-widest">Personal best!</p>
+          <p className="mt-2 text-[10px] text-muted font-bold uppercase tracking-widest italic">Mock data enabled</p>
         </BentoCard>
 
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
-          title="Focus Time"
+          title="Total Focus"
           icon={<Timer className="text-purple" />}
         >
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-5xl font-black">42.5</span>
-            <span className="text-[10px] font-black text-muted uppercase tracking-widest">Hrs</span>
+          <div className="mt-4 flex items-baseline gap-2 text-muted/50">
+            <span className="text-5xl font-black">0.0</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">Hrs</span>
           </div>
-          <p className="mt-2 text-[10px] text-purple font-bold uppercase tracking-widest">+12% from last week</p>
+          <p className="mt-2 text-[10px] text-purple font-bold uppercase tracking-widest italic">Calculated per session</p>
         </BentoCard>
 
         {/* Quick Insights */}
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400"
-          title="Recall Rate"
+          title="System Metrics"
           icon={<Zap className="text-teal" />}
-          badge="Insight"
+          badge="Beta"
         >
           <div className="mt-4 h-24 flex items-end gap-1">
             {[30, 45, 25, 60, 85, 40, 92].map((h, i) => (
@@ -137,7 +137,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[10px] font-black text-teal uppercase tracking-widest text-center">92% average today</p>
+          <p className="mt-4 text-[10px] font-black text-teal uppercase tracking-widest text-center">Sample Visualization</p>
         </BentoCard>
 
         <BentoCard
