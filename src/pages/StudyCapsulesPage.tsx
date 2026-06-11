@@ -76,7 +76,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
           Create a <button className="text-gradient hover:opacity-80 transition-opacity cursor-pointer" onClick={() => onNavigate('dashboard')}>Capsule.</button>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted/80 font-medium">
-          Feed the engine your raw notes, PDFs, or research links. We'll distill the noise into crystalline study material.
+          Upload your notes, PDFs, or research links. We'll help you extract core concepts into a structured study format.
         </p>
       </header>
 
@@ -162,11 +162,11 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 <div className="md:col-span-8">
                   <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">The Capsule</h2>
                   <CapsuleCard
-                    topic="Quantum Entanglement & Superposition"
-                    summary="A fundamental principle of quantum mechanics where particles become interconnected such that the state of one instantly influences the other, regardless of distance."
+                    topic="[Sample] Quantum Entanglement"
+                    summary="This is a sample synthesis generated from mock physics notes. Particles become interconnected such that their states are correlated regardless of distance."
                     concepts={["Bell's Theorem", "Wave Collapse", "Qubits"]}
                     formulas={["|ψ⟩ = α|0⟩ + β|1⟩", "E = hν"]}
-                    tips={["Visualize the Bloch sphere for superposition.", "Remember that entanglement does not allow faster-than-light communication."]}
+                    tips={["Example tip: Visualize the Bloch sphere.", "Example tip: Observe entanglement constraints."]}
                     time="25m"
                     difficulty="Hard"
                     icon={Atom}
@@ -177,12 +177,12 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                   <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
                   <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
                     <InsightCard
-                      label="Focus Score"
-                      value="94%"
+                      label="Session Score"
+                      value="--"
                       icon={Brain}
-                      description="Optimal for deep work session."
+                      description="Metrics will calculate after your first active session."
                       color="purple"
-                      progress={94}
+                      progress={0}
                     />
                     <InsightCard
                       label="Understanding"
@@ -224,33 +224,33 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
               <SubjectCard
                 subject="Mathematics"
                 icon={Calculator}
-                lastStudied="2 hours ago"
-                progress={85}
-                streak={12}
+                lastStudied="Not yet"
+                progress={0}
+                streak={0}
                 color="purple"
               />
               <SubjectCard
                 subject="Physics"
                 icon={Atom}
-                lastStudied="Yesterday"
-                progress={62}
-                streak={5}
+                lastStudied="Not yet"
+                progress={0}
+                streak={0}
                 color="teal"
               />
               <SubjectCard
                 subject="Chemistry"
                 icon={FlaskConical}
-                lastStudied="3 days ago"
-                progress={45}
+                lastStudied="Not yet"
+                progress={0}
                 streak={0}
                 color="purple"
               />
               <SubjectCard
                 subject="Biology"
                 icon={Dna}
-                lastStudied="1 week ago"
-                progress={92}
-                streak={24}
+                lastStudied="Not yet"
+                progress={0}
+                streak={0}
                 color="teal"
               />
             </div>

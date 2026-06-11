@@ -86,16 +86,16 @@ function App() {
         <section className="relative mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
           <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 backdrop-blur-md">
             <Sparkles size={14} className="text-purple" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted">Intelligent Learning for V1</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted">Core Beta v1.0 — Early Access</span>
           </div>
 
           <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl">
             Master any subject <br />
-            <span className="text-gradient">with surgical precision.</span>
+            <span className="text-gradient">with better structure.</span>
           </h1>
 
           <p className="mx-auto mt-8 max-w-2xl text-lg text-muted/80 sm:text-xl leading-relaxed font-medium smart-board-text">
-            Turn static notes into active intelligence. StudySpark transforms raw content into high-retention capsules for the modern competitive student.
+            Organize your learning. StudySpark helps you convert notes into structured study capsules designed for better focus and retention.
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -108,9 +108,9 @@ function App() {
             </Button>
           </div>
 
-          <div className="mt-20 flex flex-wrap justify-center gap-8 opacity-40 grayscale transition hover:grayscale-0 hover:opacity-100 duration-700">
-            {['Trusted by students at', 'Stanford', 'MIT', 'Oxford', 'NUS'].map((uni) => (
-              <span key={uni} className="text-sm font-bold tracking-widest uppercase">{uni}</span>
+          <div className="mt-20 flex flex-wrap justify-center gap-8 opacity-40 transition-opacity duration-700">
+            {['Purpose-built for', 'Self-Learners', 'Exam Prep', 'Research', 'Daily Revision'].map((tag) => (
+              <span key={tag} className="text-xs font-bold tracking-widest uppercase border border-border px-3 py-1 rounded-lg bg-card/30">{tag}</span>
             ))}
           </div>
         </section>
@@ -218,8 +218,6 @@ function App() {
         </footer>
       </main>
 
-      {/* Floating Dock (Only when not in landing, but added here for the layout consistency) */}
-      {view !== 'landing' && <Dock activeView={view} onNavigate={setView} />}
     </div>
   )
 }
