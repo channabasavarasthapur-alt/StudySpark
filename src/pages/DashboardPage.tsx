@@ -33,13 +33,13 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
               Welcome back, <span className="text-gradient">Guest.</span>
             </h1>
             <p className="mt-4 max-w-lg text-lg text-muted/80 font-medium">
-              You have <span className="text-foreground font-bold">3 items</span> on your focus list today. All systems operational.
+              You have <span className="text-foreground font-bold">3 tasks</span> to finish today. Let's get started!
             </p>
           </div>
           <div className="flex shrink-0 gap-3 animate-in fade-in slide-in-from-right-4 duration-700">
             <Button variant="outline" size="md" className="gap-2">
               <Calendar size={18} />
-              Schedule
+              Time Table
             </Button>
             <Button size="md" className="gap-2 shadow-xl shadow-purple/10" onClick={() => onNavigate('capsules')}>
               <Plus size={18} />
@@ -53,9 +53,9 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Main Focus Area */}
         <BentoCard
           className="md:col-span-8 md:row-span-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100"
-          title="Daily Focus"
-          description="Your priority learning tasks for today."
-          badge="High Priority"
+          title="Today's Tasks"
+          description="What you need to study today."
+          badge="Must Do"
         >
           <div className="mt-6 space-y-4">
             {[
@@ -98,7 +98,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Stats Bento */}
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
-          title="Session Streak"
+          title="Study Streak"
           icon={<Flame className="text-orange-500" />}
         >
           <div className="mt-4 flex items-baseline gap-2 text-muted/50">
@@ -110,7 +110,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
 
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
-          title="Total Focus"
+          title="Time Studied"
           icon={<Timer className="text-purple" />}
         >
           <div className="mt-4 flex items-baseline gap-2 text-muted/50">
@@ -123,7 +123,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Quick Insights */}
         <BentoCard
           className="md:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400"
-          title="System Metrics"
+          title="Study Stats"
           icon={<Zap className="text-teal" />}
           badge="Beta"
         >
@@ -142,8 +142,8 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
 
         <BentoCard
           className="md:col-span-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500"
-          title="Quick Actions"
-          description="Accelerate your workflow."
+          title="Quick Links"
+          description="Get more done faster."
         >
           <div className="mt-4 grid grid-cols-2 gap-4">
             <button className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card p-6 transition-all hover:border-purple/50 hover:bg-purple/5 group">
@@ -156,7 +156,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
               <div className="size-12 rounded-2xl bg-teal/10 flex items-center justify-center text-teal transition-colors group-hover:bg-teal group-hover:text-teal-foreground">
                 <FileText size={24} />
               </div>
-              <span className="font-bold text-xs uppercase tracking-widest">Create Quiz</span>
+              <span className="font-bold text-xs uppercase tracking-widest">Practice Quiz</span>
             </button>
           </div>
         </BentoCard>

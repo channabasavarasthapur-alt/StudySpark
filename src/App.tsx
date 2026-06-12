@@ -86,24 +86,24 @@ function App() {
         <section className="relative mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
           <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 backdrop-blur-md">
             <Sparkles size={14} className="text-purple" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted">Core Beta v1.0 — Early Access</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted">Beta Version — Try it now</span>
           </div>
 
           <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl">
-            Master any subject <br />
-            <span className="text-gradient">with better structure.</span>
+            Finish your syllabus <br />
+            <span className="text-gradient">much faster.</span>
           </h1>
 
           <p className="mx-auto mt-8 max-w-2xl text-lg text-muted/80 sm:text-xl leading-relaxed font-medium smart-board-text">
-            Organize your learning. StudySpark helps you convert notes into structured study capsules designed for better focus and retention.
+            Don't just read, actually remember. StudySpark turns your messy notes into neat capsules so you can focus and study better.
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" onClick={() => setView('dashboard')} className="w-full sm:w-auto">
-              Start Studying Free
+              Start Studying for Free
             </Button>
             <Button variant="ghost" size="lg" className="w-full sm:w-auto group">
-              Watch Demo
+              See how it works
               <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </div>
@@ -118,16 +118,16 @@ function App() {
         {/* Bento Showcase */}
         <section className="mx-auto max-w-7xl px-6 py-20 lg:py-32">
           <div className="mb-16 text-center lg:text-left">
-            <h2 className="text-3xl font-black sm:text-4xl lg:text-5xl">Everything you need. <br />Nothing you don't.</h2>
+            <h2 className="text-3xl font-black sm:text-4xl lg:text-5xl">Everything you need <br />to ace your exams.</h2>
           </div>
 
           <div className="grid gap-6 md:grid-cols-12 md:grid-rows-2">
             <BentoCard
               className="md:col-span-8"
               title="Study Capsules"
-              description="Context-aware summaries and insights from any content."
+              description="Get quick summaries and main points from any of your notes."
               icon={<Brain size={20} />}
-              badge="Core Engine"
+              badge="Main Feature"
             >
               <div className="mt-8 grid grid-cols-2 gap-4 overflow-hidden">
                 <div className="rounded-2xl border border-border bg-background/50 p-4 animate-float">
@@ -143,8 +143,8 @@ function App() {
 
             <BentoCard
               className="md:col-span-4"
-              title="Flash Generation"
-              description="Instant recall cards from PDFs or notes."
+              title="Quick Flashcards"
+              description="Make revision cards from your notes in a second."
               icon={<Zap size={20} />}
             >
               <div className="mt-8 flex justify-center">
@@ -156,8 +156,8 @@ function App() {
 
             <BentoCard
               className="md:col-span-4"
-              title="Focus Cycles"
-              description="Custom pomodoro timers integrated with your task list."
+              title="Study Timer"
+              description="Focus better with timers made for your tasks."
               icon={<Clock size={20} />}
             >
               <div className="mt-8 text-center">
@@ -167,8 +167,8 @@ function App() {
 
             <BentoCard
               className="md:col-span-8"
-              title="Progress Tracking"
-              description="Visual momentum that makes consistency addictive."
+              title="Track your Progress"
+              description="See how much you've studied and stay motivated to finish."
               icon={<Trophy size={20} />}
               badge="Motivation"
             >
@@ -190,12 +190,12 @@ function App() {
           <div className="glass-morphism relative overflow-hidden rounded-[3rem] px-8 py-20 sm:px-16">
             <div className="absolute inset-0 bg-gradient-to-tr from-purple/10 via-transparent to-teal/10" />
             <div className="relative z-10">
-              <h2 className="text-4xl font-black sm:text-6xl">Unlock your potential.</h2>
+              <h2 className="text-4xl font-black sm:text-6xl">Ace your next exam.</h2>
               <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
-                Join thousands of students who are learning faster and remembering more.
+                Join other students who are finishing their syllabus faster and remembering more.
               </p>
               <Button size="lg" onClick={() => setView('dashboard')} className="mt-10">
-                Get Started for Free
+                Join for Free
               </Button>
             </div>
           </div>
@@ -208,7 +208,7 @@ function App() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background font-black text-sm">S</div>
               <span className="text-sm font-bold tracking-tight">StudySpark</span>
             </div>
-            <p className="text-xs text-muted">© 2024 StudySpark. Built for the modern mind.</p>
+            <p className="text-xs text-muted">© 2024 StudySpark. Built for students.</p>
             <div className="flex gap-6 text-xs font-bold uppercase tracking-widest text-muted">
               <a href="#" className="hover:text-foreground">Twitter</a>
               <a href="#" className="hover:text-foreground">Discord</a>

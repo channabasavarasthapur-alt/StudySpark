@@ -54,13 +54,13 @@ export function CapsuleCard({
 
         <div className="mt-8 space-y-8">
           <section>
-            <h4 className="text-sm font-bold uppercase tracking-widest text-teal">Smart Summary</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest text-teal">Quick Summary</h4>
             <p className="mt-3 text-lg leading-relaxed text-muted">{summary}</p>
           </section>
 
           <div className="grid gap-8 md:grid-cols-2">
             <section>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-purple">Key Concepts</h4>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-purple">Main Points</h4>
               <ul className="mt-4 space-y-3">
                 {concepts.map((concept, index) => (
                   <li key={index} className="flex items-start gap-3 text-foreground">
