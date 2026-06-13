@@ -22,7 +22,7 @@ export function SubjectCard({
   const hoverBorder = color === 'purple' ? 'hover:border-purple/30' : 'hover:border-teal/30'
 
   return (
-    <div className={`group relative rounded-2xl border border-border bg-card p-5 transition-all ${hoverBorder} hover:shadow-xl hover:shadow-slate-900/5`}>
+    <div className={`group relative rounded-2xl border border-border/40 bg-muted/5 p-5 transition-all ${hoverBorder} hover:shadow-xl hover:shadow-slate-900/5`}>
       <div className="flex items-center justify-between">
         <div className={`grid size-12 place-items-center rounded-xl ${bgColor} ${accentColor}`}>
           <Icon size={24} />

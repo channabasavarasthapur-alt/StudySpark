@@ -16,7 +16,7 @@ export function InsightCard({ label, value, icon: Icon, description, color, prog
   }
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-all hover:border-border/80">
+    <div className="flex flex-col rounded-2xl border border-border/40 bg-muted/5 p-6 transition-all">
       <div className="flex items-center gap-4">
         <div className={`grid size-12 place-items-center rounded-xl border ${colorClasses[color]}`}>
           <Icon size={24} />

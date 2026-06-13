@@ -28,7 +28,7 @@ export function CapsuleCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-card/50 p-8 backdrop-blur-xl transition-all hover:border-purple/30 hover:shadow-2xl hover:shadow-purple/5 group">
+    <div className="relative overflow-hidden rounded-3xl border border-border/50 glass-morphism p-8 transition-all hover:border-purple/30 hover:shadow-2xl hover:shadow-purple/5 group">
       <div className="absolute -right-16 -top-16 size-48 rounded-full bg-purple/5 blur-3xl group-hover:bg-purple/10 transition-colors" />
 
       <div className="relative">

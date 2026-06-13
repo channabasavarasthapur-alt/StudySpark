@@ -158,7 +158,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
           {showCapsule && (
             <div className="animate-in fade-in slide-in-from-bottom-12 duration-1000">
-              <div className="grid gap-8 md:grid-cols-12">
+              <div className="grid gap-12 md:grid-cols-12">
                 <div className="md:col-span-8">
                   <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">The Capsule</h2>
                   <CapsuleCard
@@ -174,39 +174,41 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 </div>
 
                 <div className="md:col-span-4">
-                  <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
-                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                    <InsightCard
-                      label="Study Score"
-                      value="--"
-                      icon={Brain}
-                      description="Score will show after you start studying."
-                      color="purple"
-                      progress={0}
-                    />
-                    <InsightCard
-                      label="Understanding"
-                      value="High"
-                      icon={BarChart3}
-                      description="You've understood the main points."
-                      color="teal"
-                      progress={88}
-                    />
-                    <InsightCard
-                      label="Revision"
-                      value="Low"
-                      icon={AlertCircle}
-                      description="No need to revise immediately."
-                      color="teal"
-                      progress={12}
-                    />
-                    <InsightCard
-                      label="Status"
-                      value="Saved"
-                      icon={CheckCircle2}
-                      description="Capsule added to your library."
-                      color="purple"
-                    />
+                  <div className="rounded-3xl border border-border/40 bg-muted/5 p-6">
+                    <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+                      <InsightCard
+                        label="Study Score"
+                        value="--"
+                        icon={Brain}
+                        description="Score will show after you start studying."
+                        color="purple"
+                        progress={0}
+                      />
+                      <InsightCard
+                        label="Understanding"
+                        value="High"
+                        icon={BarChart3}
+                        description="You've understood the main points."
+                        color="teal"
+                        progress={88}
+                      />
+                      <InsightCard
+                        label="Revision"
+                        value="Low"
+                        icon={AlertCircle}
+                        description="No need to revise immediately."
+                        color="teal"
+                        progress={12}
+                      />
+                      <InsightCard
+                        label="Status"
+                        value="Saved"
+                        icon={CheckCircle2}
+                        description="Capsule added to your library."
+                        color="purple"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
