@@ -88,7 +88,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Paste your source material (notes, transcript, or article)..."
-                className="h-64 w-full resize-none rounded-[2rem] bg-background/50 p-8 text-xl leading-relaxed text-foreground placeholder:text-muted/20 focus:outline-none focus:ring-1 focus:ring-purple/20 transition-all"
+                className="h-64 w-full resize-none rounded-[2rem] border border-border/80 bg-background/50 p-8 text-xl leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-purple/20 transition-all"
               />
 
               <div className="flex items-center justify-between p-4 px-8">

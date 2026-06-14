@@ -102,7 +102,7 @@ function App() {
             <Button size="lg" onClick={() => setView('dashboard')} className="w-full sm:w-auto">
               Start Studying for Free
             </Button>
-            <Button variant="ghost" size="lg" className="w-full sm:w-auto group">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto group">
               See how it works
               <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
             </Button>
