@@ -3,6 +3,7 @@ import { BentoCard } from '../components/ui/BentoCard'
 import { Button } from '../components/ui/Button'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { Flame, Zap, Plus, ArrowRight, Trophy, Clock } from 'lucide-react'
+import { dashboardData } from '../mocks/dashboardData'
 
 interface DashboardPageProps {
   onNavigate: (view: View) => void
@@ -16,7 +17,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1 animate-in fade-in duration-700">
             <Clock size={12} className="text-purple" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted">Biology Exam in 13h</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted">{dashboardData.headerStatus}</span>
           </div>
           <ThemeToggle />
         </div>
@@ -24,10 +25,10 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <h1 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-              Finish strong, <span className="text-gradient">Guest.</span>
+              Finish strong, <span className="text-gradient">{dashboardData.userName}.</span>
             </h1>
             <p className="mt-2 text-lg text-muted/80 font-medium">
-              You're almost there. Focus on your top capsules tonight.
+              {dashboardData.heroMessage}
             </p>
           </div>
 
@@ -38,7 +39,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-orange-500/60">Study Streak</p>
-              <p className="text-xl font-black text-orange-500">2 Days</p>
+              <p className="text-xl font-black text-orange-500">{dashboardData.studyStreak}</p>
             </div>
           </div>
         </div>
@@ -51,7 +52,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           <BentoCard
             className="md:col-span-5 lg:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100"
             title="Exam Readiness"
-            description="Your syllabus mastery for Biology."
+            description={dashboardData.examReadiness.description}
           >
             <div className="mt-6 flex flex-col items-center justify-center">
               <div className="relative flex size-40 items-center justify-center">
@@ -73,23 +74,23 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                     strokeWidth="12"
                     fill="transparent"
                     strokeDasharray={440}
-                    strokeDashoffset={440 - (440 * 75) / 100}
+                    strokeDashoffset={440 - (440 * dashboardData.examReadiness.percentage) / 100}
                     strokeLinecap="round"
                     className="text-purple transition-all duration-1000 ease-out"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black">75%</span>
+                  <span className="text-4xl font-black">{dashboardData.examReadiness.percentage}%</span>
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted">Ready</span>
                 </div>
               </div>
               <div className="mt-6 flex gap-4 w-full">
                 <div className="flex-1 rounded-xl border border-border bg-background/50 p-3 text-center">
-                  <p className="text-xs font-bold text-foreground">12</p>
+                  <p className="text-xs font-bold text-foreground">{dashboardData.examReadiness.mastered}</p>
                   <p className="text-[8px] font-black uppercase tracking-tighter text-muted">Mastered</p>
                 </div>
                 <div className="flex-1 rounded-xl border border-border bg-background/50 p-3 text-center">
-                  <p className="text-xs font-bold text-foreground">4</p>
+                  <p className="text-xs font-bold text-foreground">{dashboardData.examReadiness.toReview}</p>
                   <p className="text-[8px] font-black uppercase tracking-tighter text-muted">To Review</p>
                 </div>
               </div>
@@ -100,12 +101,12 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           <BentoCard
             className="md:col-span-7 lg:col-span-8 overflow-hidden bg-gradient-to-br from-purple/5 to-teal/5 border-purple/20 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
             title="Current Mission"
-            badge="Priority"
+            badge={dashboardData.currentMission.badge}
           >
             <div className="mt-8 flex h-full flex-col justify-between">
               <div>
-                <h3 className="text-3xl font-black tracking-tight sm:text-4xl">Organic Chemistry Review</h3>
-                <p className="mt-2 text-lg text-muted/80">Last studied 2 hours ago • 15m remaining</p>
+                <h3 className="text-3xl font-black tracking-tight sm:text-4xl">{dashboardData.currentMission.title}</h3>
+                <p className="mt-2 text-lg text-muted/80">{dashboardData.currentMission.subtitle}</p>
               </div>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -134,17 +135,12 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Mission List - Streamlined Tasks */}
         <BentoCard
           className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
-          title="Tonight's Syllabus"
-          description="Everything you need to cover before tomorrow."
+          title={dashboardData.syllabus.title}
+          description={dashboardData.syllabus.description}
           icon={<Trophy size={20} className="text-teal" />}
         >
           <div className="mt-6 space-y-3">
-            {[
-              { title: 'Organic Chemistry Review', time: '15m left', status: 'Priority', progress: 65 },
-              { title: 'Macroeconomics Quiz', time: '20m task', status: 'Next', progress: 0 },
-              { title: 'Biology Lab Notes', time: '10m read', status: 'Waiting', progress: 0 },
-              { title: 'Calculus Problem Set', time: 'Completed', status: 'Done', progress: 100 },
-            ].map((task, idx) => (
+            {dashboardData.syllabus.tasks.map((task, idx) => (
               <div
                 key={task.title}
                 className="group flex items-center justify-between rounded-2xl border border-border bg-background/50 p-4 transition-all hover:bg-foreground/5"

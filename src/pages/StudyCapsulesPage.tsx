@@ -6,20 +6,13 @@ import { InsightCard } from '../components/capsules/InsightCard'
 import { SubjectCard } from '../components/capsules/SubjectCard'
 import {
   Sparkles,
-  Brain,
   Zap,
-  Atom,
   Loader2,
   BookOpen,
   ArrowLeft,
-  Calculator,
-  FlaskConical,
-  Dna,
-  BarChart3,
-  CheckCircle2,
-  AlertCircle
 } from 'lucide-react'
 import type { View } from '../types/navigation'
+import { capsuleInsights, loadingMessages, recentSubjects, sampleCapsule } from '../mocks/capsuleData'
 
 interface StudyCapsulesPageProps {
   onNavigate: (view: View) => void
@@ -30,14 +23,6 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
   const [showCapsule, setShowCapsule] = useState(false)
-
-  const loadingMessages = [
-    "Reading your notes...",
-    "Finding key concepts...",
-    "Making main points...",
-    "Organizing formulas...",
-    "Almost done..."
-  ]
 
   const handleGenerate = () => {
     if (!input.trim()) return
@@ -162,14 +147,14 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 <div className="md:col-span-8">
                   <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">The Capsule</h2>
                   <CapsuleCard
-                    topic="[Sample] Quantum Entanglement"
-                    summary="This is a sample synthesis generated from mock physics notes. Particles become interconnected such that their states are correlated regardless of distance."
-                    concepts={["Bell's Theorem", "Wave Collapse", "Qubits"]}
-                    formulas={["|ψ⟩ = α|0⟩ + β|1⟩", "E = hν"]}
-                    tips={["Example tip: Visualize the Bloch sphere.", "Example tip: Observe entanglement constraints."]}
-                    time="25m"
-                    difficulty="Hard"
-                    icon={Atom}
+                    topic={sampleCapsule.topic}
+                    summary={sampleCapsule.summary}
+                    concepts={sampleCapsule.concepts}
+                    formulas={sampleCapsule.formulas}
+                    tips={sampleCapsule.tips}
+                    time={sampleCapsule.time}
+                    difficulty={sampleCapsule.difficulty}
+                    icon={sampleCapsule.icon}
                   />
                 </div>
 
@@ -177,37 +162,17 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                   <div className="rounded-3xl border border-border/40 bg-muted/5 p-6">
                     <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                      <InsightCard
-                        label="Study Score"
-                        value="--"
-                        icon={Brain}
-                        description="Score will show after you start studying."
-                        color="purple"
-                        progress={0}
-                      />
-                      <InsightCard
-                        label="Understanding"
-                        value="High"
-                        icon={BarChart3}
-                        description="You've understood the main points."
-                        color="teal"
-                        progress={88}
-                      />
-                      <InsightCard
-                        label="Revision"
-                        value="Low"
-                        icon={AlertCircle}
-                        description="No need to revise immediately."
-                        color="teal"
-                        progress={12}
-                      />
-                      <InsightCard
-                        label="Status"
-                        value="Saved"
-                        icon={CheckCircle2}
-                        description="Capsule added to your library."
-                        color="purple"
-                      />
+                      {capsuleInsights.map((insight) => (
+                        <InsightCard
+                          key={insight.label}
+                          label={insight.label}
+                          value={insight.value}
+                          icon={insight.icon}
+                          description={insight.description}
+                          color={insight.color}
+                          progress={insight.progress}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -223,38 +188,17 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <SubjectCard
-                subject="Mathematics"
-                icon={Calculator}
-                lastStudied="Not yet"
-                progress={0}
-                streak={0}
-                color="purple"
-              />
-              <SubjectCard
-                subject="Physics"
-                icon={Atom}
-                lastStudied="Not yet"
-                progress={0}
-                streak={0}
-                color="teal"
-              />
-              <SubjectCard
-                subject="Chemistry"
-                icon={FlaskConical}
-                lastStudied="Not yet"
-                progress={0}
-                streak={0}
-                color="purple"
-              />
-              <SubjectCard
-                subject="Biology"
-                icon={Dna}
-                lastStudied="Not yet"
-                progress={0}
-                streak={0}
-                color="teal"
-              />
+              {recentSubjects.map((subject) => (
+                <SubjectCard
+                  key={subject.subject}
+                  subject={subject.subject}
+                  icon={subject.icon}
+                  lastStudied={subject.lastStudied}
+                  progress={subject.progress}
+                  streak={subject.streak}
+                  color={subject.color}
+                />
+              ))}
             </div>
           </section>
         </div>

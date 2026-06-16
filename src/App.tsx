@@ -86,7 +86,7 @@ function App() {
         <section className="relative mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
           <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 backdrop-blur-md">
             <Sparkles size={14} className="text-purple" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted">Beta Version — Try it now</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted">Beta Version - Try it now</span>
           </div>
 
           <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl">
@@ -208,7 +208,7 @@ function App() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background font-black text-sm">S</div>
               <span className="text-sm font-bold tracking-tight">StudySpark</span>
             </div>
-            <p className="text-xs text-muted">© 2024 StudySpark. Built for students.</p>
+            <p className="text-xs text-muted">(c) 2024 StudySpark. Built for students.</p>
             <div className="flex gap-6 text-xs font-bold uppercase tracking-widest text-muted">
               <a href="#" className="hover:text-foreground">Twitter</a>
               <a href="#" className="hover:text-foreground">Discord</a>
