@@ -1,16 +1,37 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './components/ThemeToggle'
 import DashboardPage from './pages/DashboardPage'
+import ExamsPage from './pages/ExamsPage'
 import StudyCapsulesPage from './pages/StudyCapsulesPage'
+import SetupPage from './pages/SetupPage'
 import { Button } from './components/ui/Button'
 import { BentoCard } from './components/ui/BentoCard'
 import { Dock } from './components/layout/Dock'
 import type { View } from './types/navigation'
 import { Sparkles, Brain, Zap, Clock, Trophy, MousePointer2, ArrowRight } from 'lucide-react'
 
-function App() {
-  const [view, setView] = useState<View>('landing')
+const viewPaths: Record<View, string> = {
+  landing: '/',
+  dashboard: '/dashboard',
+  capsules: '/capsules',
+  exams: '/exams',
+  setup: '/setup',
+}
+
+const pathViews: Record<string, View> = Object.fromEntries(
+  Object.entries(viewPaths).map(([view, path]) => [path, view]),
+) as Record<string, View>
+
+function AppShell() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
+  const view = useMemo(() => pathViews[location.pathname] ?? 'landing', [location.pathname])
+
+  const handleNavigate = (nextView: View) => {
+    navigate(viewPaths[nextView])
+  }
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -21,8 +42,8 @@ function App() {
   if (view === 'dashboard') {
     return (
       <>
-        <DashboardPage onNavigate={setView} />
-        <Dock activeView={view} onNavigate={setView} />
+        <DashboardPage onNavigate={handleNavigate} />
+        <Dock activeView={view} onNavigate={handleNavigate} />
       </>
     )
   }
@@ -30,22 +51,27 @@ function App() {
   if (view === 'capsules') {
     return (
       <>
-        <StudyCapsulesPage onNavigate={setView} />
-        <Dock activeView={view} onNavigate={setView} />
+        <StudyCapsulesPage onNavigate={handleNavigate} />
+        <Dock activeView={view} onNavigate={handleNavigate} />
       </>
     )
   }
 
-  if (view === 'exams' || view === 'setup') {
+  if (view === 'setup') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="text-center">
-          <h2 className="text-3xl font-black uppercase tracking-tighter sm:text-5xl">Coming Soon</h2>
-          <p className="mt-4 text-muted">This module is under development for V1.1</p>
-          <Button className="mt-8" onClick={() => setView('dashboard')}>Back to Dashboard</Button>
-        </div>
-        <Dock activeView={view} onNavigate={setView} />
-      </div>
+      <>
+        <SetupPage onNavigate={handleNavigate} />
+        <Dock activeView={view} onNavigate={handleNavigate} />
+      </>
+    )
+  }
+
+  if (view === 'exams') {
+    return (
+      <>
+        <ExamsPage onNavigate={handleNavigate} />
+        <Dock activeView={view} onNavigate={handleNavigate} />
+      </>
     )
   }
 
@@ -65,10 +91,10 @@ function App() {
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={() => setView('dashboard')}>
+            <Button variant="outline" size="sm" onClick={() => handleNavigate('dashboard')}>
               Log in
             </Button>
-            <Button size="sm" onClick={() => setView('dashboard')}>
+            <Button size="sm" onClick={() => handleNavigate('dashboard')}>
               Get Started
             </Button>
           </div>
@@ -92,7 +118,7 @@ function App() {
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" onClick={() => setView('dashboard')} className="w-full sm:w-auto">
+            <Button size="lg" onClick={() => handleNavigate('dashboard')} className="w-full sm:w-auto">
               Start Studying for Free
             </Button>
             <Button variant="outline" size="lg" className="w-full sm:w-auto group">
@@ -186,7 +212,7 @@ function App() {
               <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
                 Track focused sessions, organize capsules, and build a revision history that makes progress visible.
               </p>
-              <Button size="lg" onClick={() => setView('dashboard')} className="mt-10">
+              <Button size="lg" onClick={() => handleNavigate('dashboard')} className="mt-10">
                 Join for Free
               </Button>
             </div>
@@ -211,6 +237,19 @@ function App() {
       </main>
 
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<AppShell />} />
+      <Route path="/dashboard" element={<AppShell />} />
+      <Route path="/capsules" element={<AppShell />} />
+      <Route path="/exams" element={<AppShell />} />
+      <Route path="/setup" element={<AppShell />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 
