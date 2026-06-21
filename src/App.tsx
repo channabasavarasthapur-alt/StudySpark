@@ -53,8 +53,8 @@ function App() {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
       {/* Premium Navbar */}
       <nav
-        className={`fixed inset-x-0 top-0 z-50 flex h-20 items-center transition-all duration-300 ${
-          scrolled ? 'border-b border-border bg-background/80 backdrop-blur-xl' : 'bg-transparent'
+        className={`fixed inset-x-0 top-0 z-50 flex h-20 items-center transition-colors duration-200 ${
+          scrolled ? 'border-b border-border bg-background' : 'bg-transparent'
         }`}
       >
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6">
@@ -76,26 +76,19 @@ function App() {
       </nav>
 
       <main className="relative pt-20">
-        {/* Background Gradients */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 left-1/4 size-[500px] rounded-full bg-purple/10 blur-[120px]" />
-          <div className="absolute top-1/2 right-1/4 size-[400px] rounded-full bg-teal/5 blur-[100px]" />
-        </div>
-
         {/* Hero Section */}
-        <section className="relative mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
-          <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 backdrop-blur-md">
+        <section className="relative mx-auto max-w-7xl px-6 py-20 text-center lg:py-28">
+          <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 shadow-sm">
             <Sparkles size={14} className="text-purple" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted">Beta Version - Try it now</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Structured study workspace</span>
           </div>
 
-          <h1 className="mx-auto max-w-4xl text-5xl font-black leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl">
-            Finish your syllabus <br />
-            <span className="text-gradient">much faster.</span>
+          <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+            Build better study habits with <span className="text-gradient">clearer structure.</span>
           </h1>
 
-          <p className="mx-auto mt-8 max-w-2xl text-lg text-muted/80 sm:text-xl leading-relaxed font-medium smart-board-text">
-            Don't just read, actually remember. StudySpark turns your messy notes into neat capsules so you can focus and study better.
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-muted sm:text-xl leading-8 smart-board-text">
+            StudySpark turns notes, sessions, and revision history into a focused learning system students can understand and teachers can trust.
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -108,9 +101,9 @@ function App() {
             </Button>
           </div>
 
-          <div className="mt-20 flex flex-wrap justify-center gap-8 opacity-40 transition-opacity duration-700">
-            {['Purpose-built for', 'Self-Learners', 'Exam Prep', 'Research', 'Daily Revision'].map((tag) => (
-              <span key={tag} className="text-xs font-bold tracking-widest uppercase border border-border px-3 py-1 rounded-lg bg-card/30">{tag}</span>
+          <div className="mt-16 flex flex-wrap justify-center gap-3 transition-opacity duration-700">
+            {['Study Sessions', 'Capsules', 'Exam Prep', 'Progress Tracking', 'Daily Revision'].map((tag) => (
+              <span key={tag} className="text-xs font-semibold tracking-wider uppercase border border-border px-3 py-1 rounded-lg bg-card text-muted shadow-sm">{tag}</span>
             ))}
           </div>
         </section>
@@ -118,7 +111,7 @@ function App() {
         {/* Bento Showcase */}
         <section className="mx-auto max-w-7xl px-6 py-20 lg:py-32">
           <div className="mb-16 text-center lg:text-left">
-            <h2 className="text-3xl font-black sm:text-4xl lg:text-5xl">Everything you need <br />to ace your exams.</h2>
+            <h2 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">A calmer way to manage <br />serious study.</h2>
           </div>
 
           <div className="grid gap-6 md:grid-cols-12 md:grid-rows-2">
@@ -130,11 +123,11 @@ function App() {
               badge="Main Feature"
             >
               <div className="mt-8 grid grid-cols-2 gap-4 overflow-hidden">
-                <div className="rounded-2xl border border-border bg-background/50 p-4 animate-float">
+                <div className="rounded-2xl border border-border bg-background/50 p-4">
                   <div className="h-2 w-1/2 rounded-full bg-purple/30 mb-2" />
                   <div className="h-2 w-3/4 rounded-full bg-foreground/10" />
                 </div>
-                <div className="rounded-2xl border border-border bg-background/50 p-4 delay-150 animate-float">
+                <div className="rounded-2xl border border-border bg-background/50 p-4">
                   <div className="h-2 w-1/3 rounded-full bg-teal/30 mb-2" />
                   <div className="h-2 w-2/3 rounded-full bg-foreground/10" />
                 </div>
@@ -176,7 +169,7 @@ function App() {
                 {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
                   <div
                     key={i}
-                    className="flex-1 bg-gradient-to-t from-purple to-teal rounded-t-lg transition-all duration-500 hover:opacity-80"
+                    className="flex-1 rounded-t-lg bg-teal transition-[height] duration-500"
                     style={{ height: `${h}%` }}
                   />
                 ))}
@@ -187,12 +180,11 @@ function App() {
 
         {/* Final CTA */}
         <section className="mx-auto max-w-7xl px-6 py-32 text-center">
-          <div className="glass-morphism relative overflow-hidden rounded-[3rem] px-8 py-20 sm:px-16">
-            <div className="absolute inset-0 bg-gradient-to-tr from-purple/10 via-transparent to-teal/10" />
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card px-8 py-20 shadow-sm sm:px-16">
             <div className="relative z-10">
-              <h2 className="text-4xl font-black sm:text-6xl">Ace your next exam.</h2>
+              <h2 className="text-4xl font-extrabold sm:text-5xl">Prepare with evidence, not guesswork.</h2>
               <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
-                Join other students who are finishing their syllabus faster and remembering more.
+                Track focused sessions, organize capsules, and build a revision history that makes progress visible.
               </p>
               <Button size="lg" onClick={() => setView('dashboard')} className="mt-10">
                 Join for Free

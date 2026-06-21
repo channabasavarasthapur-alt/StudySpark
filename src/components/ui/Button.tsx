@@ -19,20 +19,20 @@ export function Button({
   disabled = false,
   type = 'button',
 }: ButtonProps) {
-  const baseStyles = 'relative inline-flex items-center justify-center rounded-2xl font-bold tracking-tight transition-all duration-300 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-purple/40 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed overflow-hidden group'
+  const baseStyles = 'relative inline-flex items-center justify-center rounded-xl font-semibold tracking-tight transition-[background-color,border-color,color,box-shadow,transform] duration-200 will-change-transform active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed overflow-hidden group'
 
   const variants = {
-    primary: 'bg-foreground text-background hover:opacity-90 hover:shadow-xl hover:shadow-foreground/10 hover:-translate-y-0.5',
-    secondary: 'bg-purple text-purple-foreground hover:brightness-110 shadow-lg shadow-purple/20 hover:shadow-purple/30 hover:-translate-y-0.5',
-    outline: 'border border-border bg-transparent text-foreground hover:bg-foreground/5 hover:border-foreground/20',
-    ghost: 'text-muted hover:text-foreground hover:bg-foreground/5 hover:-translate-y-0.5',
-    glass: 'glass text-foreground hover:bg-white/10 dark:hover:bg-white/5',
+    primary: 'bg-foreground text-background shadow-sm hover:bg-foreground/90',
+    secondary: 'bg-purple text-purple-foreground shadow-sm shadow-purple/15 hover:bg-purple/90',
+    outline: 'border border-border bg-card text-foreground shadow-sm hover:border-purple/30 hover:bg-purple/5',
+    ghost: 'text-muted hover:text-foreground hover:bg-foreground/5',
+    glass: 'border border-border bg-card text-foreground shadow-sm hover:bg-background',
   }
 
   const sizes = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
+    sm: 'px-3.5 py-2 text-sm',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-6 py-3 text-base',
   }
 
   return (
@@ -43,9 +43,6 @@ export function Button({
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
     >
       <span className="relative z-10">{children}</span>
-      {(variant === 'primary' || variant === 'secondary') && (
-        <div className="absolute inset-0 z-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 transition-opacity group-hover:opacity-100" />
-      )}
     </button>
   )
 }

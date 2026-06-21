@@ -29,24 +29,24 @@ export interface DashboardData {
 }
 
 export const dashboardData: DashboardData = {
-  headerStatus: 'Biology Exam in 13h',
-  userName: 'Guest',
-  heroMessage: "You're almost there. Focus on your top capsules tonight.",
+  headerStatus: 'Study plan ready',
+  userName: 'Student',
+  heroMessage: 'Focus on the next useful study action first.',
   studyStreak: '2 Days',
   examReadiness: {
-    description: 'Your syllabus mastery for Biology.',
+    description: 'Readiness is calculated from completed study sessions.',
     percentage: 75,
     mastered: 12,
     toReview: 4,
   },
   currentMission: {
     title: 'Organic Chemistry Review',
-    subtitle: 'Last studied 2 hours ago - 15m remaining',
+    subtitle: 'Suggested review session based on the current study queue.',
     badge: 'Priority',
   },
   syllabus: {
-    title: "Tonight's Syllabus",
-    description: 'Everything you need to cover before tomorrow.',
+    title: "Today's Study Plan",
+    description: 'Suggested starting points for a focused session.',
     tasks: [
       { title: 'Organic Chemistry Review', time: '15m left', status: 'Priority', progress: 65 },
       { title: 'Macroeconomics Quiz', time: '20m task', status: 'Next', progress: 0 },

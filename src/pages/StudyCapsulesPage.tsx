@@ -10,12 +10,21 @@ import {
   Loader2,
   BookOpen,
   ArrowLeft,
+  Clock,
 } from 'lucide-react'
 import type { View } from '../types/navigation'
 import { capsuleInsights, loadingMessages, recentSubjects, sampleCapsule } from '../mocks/capsuleData'
+import { useStudy } from '../study/studyContext'
 
 interface StudyCapsulesPageProps {
   onNavigate: (view: View) => void
+}
+
+function formatElapsed(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
 export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps) {
@@ -23,9 +32,20 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
   const [showCapsule, setShowCapsule] = useState(false)
+  const { activeSession, elapsedSeconds, endSession, pauseSession, resumeSession, startSession } = useStudy()
+  const isCapsuleSessionActive = activeSession?.source === 'capsule'
+  const hasOtherActiveSession = Boolean(activeSession && !isCapsuleSessionActive)
+  const elapsedDisplay = formatElapsed(elapsedSeconds)
+  const estimatedReadMinutes = Math.max(1, Math.ceil(input.length / 500))
 
   const handleGenerate = () => {
     if (!input.trim()) return
+    const plannedMinutes = estimatedReadMinutes
+    startSession({
+      source: 'capsule',
+      title: sampleCapsule.topic,
+      plannedMinutes,
+    })
     setIsGenerating(true)
     setShowCapsule(false)
     setLoadingStep(0)
@@ -44,173 +64,227 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
   return (
     <div className="min-h-screen bg-background pb-40 transition-colors duration-500">
-      {/* Header */}
-      <header className="mx-auto max-w-7xl px-6 pt-8 lg:pt-12 text-center">
-        <div className="flex items-center justify-between mb-8">
+      <header className="mx-auto max-w-7xl px-6 pt-6 lg:pt-8">
+        <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')} className="gap-2">
             <ArrowLeft size={16} />
-            Back
+            Back to dashboard
           </Button>
           <ThemeToggle />
         </div>
-        <div className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-purple/20 bg-purple/5 px-4 py-1.5 backdrop-blur-md">
-          <Sparkles size={14} className="text-purple" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-purple">Smart Study v1.0</span>
+
+        <div className="mt-10 max-w-3xl">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted">Study capsules</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Convert notes into focused study material.
+          </h1>
+          <p className="mt-5 text-base leading-7 text-muted sm:text-lg">
+            Create a structured capsule, review it like an exam sheet, then study it in a timed session that is saved to your history.
+          </p>
         </div>
-        <h1 className="text-4xl font-black tracking-tight sm:text-6xl lg:text-7xl">
-          Make a <button className="text-gradient hover:opacity-80 transition-opacity cursor-pointer" onClick={() => onNavigate('dashboard')}>Capsule.</button>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted/80 font-medium">
-          Paste your notes or book chapters. We'll help you get the main points in a neat study format.
-        </p>
       </header>
 
-      <main className="mx-auto mt-16 max-w-5xl px-6">
-        {/* Magic Input Area */}
-        <section className="relative">
-          <div className="glass-morphism relative overflow-hidden rounded-[2.5rem] p-2">
-             <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Paste your source material (notes, transcript, or article)..."
-                className="h-64 w-full resize-none rounded-[2rem] border border-border/80 bg-background/50 p-8 text-xl leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-purple/20 transition-all"
-              />
-
-              <div className="flex items-center justify-between p-4 px-8">
-                <div className="flex gap-4 text-xs font-bold uppercase tracking-widest text-muted">
-                  <span>{input.length} Characters</span>
-                  <span>{Math.ceil(input.length / 500)}m Read</span>
-                </div>
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!input.trim() || isGenerating}
-                  className="gap-2 px-8"
-                  variant="secondary"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Thinking...
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={18} fill="currentColor" />
-                      Make Capsule
-                    </>
-                  )}
-                </Button>
+      <main className="mx-auto mt-10 max-w-7xl space-y-6 px-6">
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Step 1</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Source material</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                  Paste class notes, textbook excerpts, or a revision outline. The capsule will keep the important ideas visible.
+                </p>
               </div>
+              <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wider text-muted">
+                <span>{input.length} characters</span>
+                <span>{estimatedReadMinutes}m read</span>
+              </div>
+            </div>
+
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Paste notes, textbook text, transcript, or revision material..."
+              className="h-64 w-full resize-none rounded-xl border border-border bg-background/70 p-5 text-base leading-8 text-foreground placeholder:text-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-purple/20 sm:text-lg"
+            />
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-xl text-sm leading-6 text-muted">
+                Clear source material creates a cleaner study sheet. You can edit the text before creating a capsule.
+              </p>
+              <Button
+                onClick={handleGenerate}
+                disabled={!input.trim() || isGenerating || Boolean(activeSession)}
+                className="gap-2"
+                variant="secondary"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Creating capsule
+                  </>
+                ) : (
+                  <>
+                    <Zap size={18} fill="currentColor" />
+                    Create capsule
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
-          {/* Decorative Elements */}
-          <div className="absolute -left-12 -top-12 -z-10 size-48 rounded-full bg-purple/10 blur-3xl animate-pulse-slow" />
-          <div className="absolute -right-12 -bottom-12 -z-10 size-48 rounded-full bg-teal/10 blur-3xl animate-pulse-slow delay-700" />
-        </section>
-
-        {/* Results Section */}
-        <div className="mt-20 space-y-24 min-h-[400px]">
-          {!showCapsule && !isGenerating && (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-1000">
-               <div className="relative mb-8">
-                  <div className="absolute inset-0 scale-150 bg-purple/5 blur-3xl rounded-full" />
-                  <div className="relative flex size-24 items-center justify-center rounded-[2rem] border border-border bg-card/50 backdrop-blur-sm shadow-2xl">
-                    <BookOpen size={40} className="text-muted/40" />
-                  </div>
-               </div>
-               <h3 className="text-xl font-bold text-foreground/40">Ready to Start</h3>
-               <p className="mt-2 max-w-xs text-sm font-medium text-muted/60 leading-relaxed uppercase tracking-widest">Your neat study notes will appear here once you press "Make Capsule".</p>
-            </div>
-          )}
-
-          {isGenerating && (
-            <div className="flex flex-col items-center justify-center py-20 space-y-8 animate-in fade-in duration-500">
-               <div className="relative flex size-24 items-center justify-center">
-                  <div className="absolute inset-0 animate-spin rounded-full border-b-2 border-purple" />
-                  <div className="absolute inset-2 animate-[spin_3s_linear_infinite_reverse] rounded-full border-t-2 border-teal" />
-                  <Sparkles size={32} className="text-purple animate-pulse" />
-               </div>
-               <div className="text-center">
-                  <div className="mx-auto mb-4 h-1 w-48 overflow-hidden rounded-full bg-muted/10">
-                    <div className="h-full bg-gradient-to-r from-purple to-teal transition-all duration-500 ease-out" style={{ width: `${((loadingStep + 1) / loadingMessages.length) * 100}%` }} />
-                  </div>
-                  <p className="text-xs font-black text-purple uppercase tracking-[0.3em] animate-pulse">
-                    {loadingMessages[loadingStep]}
-                  </p>
-               </div>
-            </div>
-          )}
-
-          {showCapsule && (
-            <div className="animate-in fade-in slide-in-from-bottom-12 duration-1000">
-              <div className="grid gap-12 md:grid-cols-12">
-                <div className="md:col-span-8">
-                  <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">The Capsule</h2>
-                  <CapsuleCard
-                    topic={sampleCapsule.topic}
-                    summary={sampleCapsule.summary}
-                    concepts={sampleCapsule.concepts}
-                    formulas={sampleCapsule.formulas}
-                    tips={sampleCapsule.tips}
-                    time={sampleCapsule.time}
-                    difficulty={sampleCapsule.difficulty}
-                    icon={sampleCapsule.icon}
-                  />
-                </div>
-
-                <div className="md:col-span-4">
-                  <div className="rounded-3xl border border-border/40 bg-muted/5 p-6">
-                    <h2 className="mb-6 px-2 text-2xl font-black tracking-tight">Insights</h2>
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                      {capsuleInsights.map((insight) => (
-                        <InsightCard
-                          key={insight.label}
-                          label={insight.label}
-                          value={insight.value}
-                          icon={insight.icon}
-                          description={insight.description}
-                          color={insight.color}
-                          progress={insight.progress}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+          <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="grid size-11 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
+                <Clock size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Study session</p>
+                <h2 className="text-xl font-extrabold text-foreground">
+                  {isCapsuleSessionActive ? activeSession.status : hasOtherActiveSession ? 'Active elsewhere' : 'Ready'}
+                </h2>
               </div>
             </div>
-          )}
 
-          {/* Recent Capsules Section */}
-          <section className="animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
-            <div className="mb-8 flex items-center justify-between px-2">
-              <h2 className="text-2xl font-black tracking-tight">Recent Capsules</h2>
-              <Button variant="ghost" size="sm" className="text-purple uppercase font-black tracking-widest text-[10px]">View Library</Button>
+            {isCapsuleSessionActive ? (
+              <div className="session-state-transition mt-6 space-y-5">
+                <div className="rounded-2xl border border-border bg-background/70 p-4">
+                  <p className="text-sm font-semibold text-foreground">{activeSession.title}</p>
+                  <p className="mt-2 text-4xl font-extrabold tabular-nums tracking-tight text-foreground">{elapsedDisplay}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">active study time</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {activeSession.status === 'running' ? (
+                    <Button onClick={pauseSession} variant="outline">
+                      Pause
+                    </Button>
+                  ) : (
+                    <Button onClick={resumeSession} variant="outline">
+                      Resume
+                    </Button>
+                  )}
+                  <Button onClick={endSession} variant="outline">
+                    End
+                  </Button>
+                </div>
+                <p className="text-sm leading-6 text-muted">
+                  Ending the session saves this study time to your dashboard history.
+                </p>
+              </div>
+            ) : (
+              <div className="session-state-transition mt-6 rounded-2xl border border-dashed border-border bg-background/60 p-5">
+                <p className="text-sm leading-6 text-muted">
+                  {hasOtherActiveSession
+                    ? 'Finish or pause the current active session before starting a capsule session.'
+                    : 'Create a capsule to begin a focused study session. The timer will appear here.'}
+                </p>
+              </div>
+            )}
+          </aside>
+        </section>
+
+        {isGenerating && (
+          <section className="workflow-enter rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Sparkles size={20} className="text-purple" />
+              <div>
+                <h2 className="text-xl font-extrabold text-foreground">Building your study sheet</h2>
+                <p className="mt-1 text-sm text-muted">{loadingMessages[loadingStep]}</p>
+              </div>
             </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {recentSubjects.map((subject) => (
-                <SubjectCard
-                  key={subject.subject}
-                  subject={subject.subject}
-                  icon={subject.icon}
-                  lastStudied={subject.lastStudied}
-                  progress={subject.progress}
-                  streak={subject.streak}
-                  color={subject.color}
-                />
-              ))}
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="skeleton-shimmer h-24 rounded-xl bg-border/50" />
+              <div className="skeleton-shimmer h-24 rounded-xl bg-border/50" />
+              <div className="skeleton-shimmer h-24 rounded-xl bg-border/50" />
+            </div>
+            <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-border">
+              <div
+                className="h-full rounded-full bg-purple progress-transition"
+                style={{ width: `${((loadingStep + 1) / loadingMessages.length) * 100}%` }}
+              />
             </div>
           </section>
-        </div>
-      </main>
+        )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes progress {
-          0% { width: 0%; margin-left: 0%; }
-          50% { width: 30%; margin-left: 35%; }
-          100% { width: 0%; margin-left: 100%; }
-        }
-      `}} />
+        {!showCapsule && !isGenerating && (
+          <section className="rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center shadow-sm">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-border bg-background text-muted">
+              <BookOpen size={28} />
+            </div>
+            <h2 className="mt-5 text-xl font-extrabold text-foreground">No capsule yet</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+              Add source material above to create a study sheet with summary, key points, formulas, and review guidance.
+            </p>
+          </section>
+        )}
+
+        {showCapsule && (
+          <section className="workflow-enter grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div>
+              <div className="mb-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Step 2</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Academic study sheet</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                  Review the capsule as structured revision material, then use the session panel to save focused study time.
+                </p>
+              </div>
+              <CapsuleCard
+                topic={sampleCapsule.topic}
+                summary={sampleCapsule.summary}
+                concepts={sampleCapsule.concepts}
+                formulas={sampleCapsule.formulas}
+                tips={sampleCapsule.tips}
+                time={sampleCapsule.time}
+                difficulty={sampleCapsule.difficulty}
+                icon={sampleCapsule.icon}
+              />
+            </div>
+
+            <aside className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Learning signals</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Insights</h2>
+              </div>
+              {capsuleInsights.map((insight) => (
+                <InsightCard
+                  key={insight.label}
+                  label={insight.label}
+                  value={insight.value}
+                  icon={insight.icon}
+                  description={insight.description}
+                  color={insight.color}
+                  progress={insight.progress}
+                />
+              ))}
+            </aside>
+          </section>
+        )}
+
+        <section>
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Library preview</p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Recent capsules</h2>
+            </div>
+            <Button variant="ghost" size="sm" className="self-start text-purple sm:self-auto">
+              View Library
+            </Button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {recentSubjects.map((subject) => (
+              <SubjectCard
+                key={subject.subject}
+                subject={subject.subject}
+                icon={subject.icon}
+                lastStudied={subject.lastStudied}
+                progress={subject.progress}
+                streak={subject.streak}
+                color={subject.color}
+              />
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   )
 }

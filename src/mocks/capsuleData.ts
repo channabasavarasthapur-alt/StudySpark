@@ -48,12 +48,12 @@ export const loadingMessages = [
 ]
 
 export const sampleCapsule: CapsuleData = {
-  topic: '[Sample] Quantum Entanglement',
+  topic: 'Quantum Entanglement',
   summary:
-    'This is a sample synthesis generated from mock physics notes. Particles become interconnected such that their states are correlated regardless of distance.',
+    'Quantum entanglement describes linked particle states where measuring one particle helps predict the state of another, even when separated by distance.',
   concepts: ["Bell's Theorem", 'Wave Collapse', 'Qubits'],
   formulas: ['|psi> = alpha|0> + beta|1>', 'E = h * frequency'],
-  tips: ['Example tip: Visualize the Bloch sphere.', 'Example tip: Observe entanglement constraints.'],
+  tips: ['Use a two-column diagram to compare each particle state.', 'Review why entanglement creates correlation, not faster-than-light messaging.'],
   time: '25m',
   difficulty: 'Hard',
   icon: Atom,
@@ -64,7 +64,7 @@ export const capsuleInsights: InsightCardData[] = [
     label: 'Study Score',
     value: '--',
     icon: Brain,
-    description: 'Score will show after you start studying.',
+    description: 'A score appears after a completed study session.',
     color: 'purple',
     progress: 0,
   },
@@ -72,7 +72,7 @@ export const capsuleInsights: InsightCardData[] = [
     label: 'Understanding',
     value: 'High',
     icon: BarChart3,
-    description: "You've understood the main points.",
+    description: 'Core ideas are organized for quick review.',
     color: 'teal',
     progress: 88,
   },
@@ -80,7 +80,7 @@ export const capsuleInsights: InsightCardData[] = [
     label: 'Revision',
     value: 'Low',
     icon: AlertCircle,
-    description: 'No need to revise immediately.',
+    description: 'Schedule revision after the first study pass.',
     color: 'teal',
     progress: 12,
   },
@@ -88,7 +88,7 @@ export const capsuleInsights: InsightCardData[] = [
     label: 'Status',
     value: 'Saved',
     icon: CheckCircle2,
-    description: 'Capsule added to your library.',
+    description: 'Capsule is ready for your study history.',
     color: 'purple',
   },
 ]

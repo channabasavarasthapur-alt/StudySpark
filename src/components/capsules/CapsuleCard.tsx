@@ -28,23 +28,21 @@ export function CapsuleCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/50 glass-morphism p-8 transition-all hover:border-purple/30 hover:shadow-2xl hover:shadow-purple/5 group">
-      <div className="absolute -right-16 -top-16 size-48 rounded-full bg-purple/5 blur-3xl group-hover:bg-purple/10 transition-colors" />
-
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors duration-200 hover:border-purple/20 sm:p-8">
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="grid size-12 place-items-center rounded-2xl bg-purple/10 text-purple">
+            <div className="grid size-12 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
               <Icon size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-foreground">{topic}</h3>
+              <h3 className="text-2xl font-extrabold text-foreground">{topic}</h3>
               <div className="mt-1 flex items-center gap-3">
                 <span className="flex items-center gap-1.5 text-sm font-medium text-muted">
                   <span className="size-1.5 rounded-full bg-purple" />
-                  {time}
+                  {time} review
                 </span>
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${difficultyColors[difficulty]}`}>
+                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${difficultyColors[difficulty]}`}>
                   {difficulty}
                 </span>
               </div>
@@ -54,18 +52,18 @@ export function CapsuleCard({
 
         <div className="mt-8 space-y-8">
           <section>
-            <h4 className="text-sm font-bold uppercase tracking-widest text-teal">Quick Summary</h4>
-            <p className="mt-3 text-lg leading-relaxed text-muted">{summary}</p>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Overview</h4>
+            <p className="mt-3 text-base leading-7 text-muted sm:text-lg">{summary}</p>
           </section>
 
           <div className="grid gap-8 md:grid-cols-2">
             <section>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-purple">Main Points</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Key ideas</h4>
               <ul className="mt-4 space-y-3">
                 {concepts.map((concept, index) => (
                   <li key={index} className="flex items-start gap-3 text-foreground">
                     <span className="mt-2 size-1.5 shrink-0 rounded-full bg-purple" />
-                    <span className="font-medium">{concept}</span>
+                    <span className="font-medium leading-6">{concept}</span>
                   </li>
                 ))}
               </ul>
@@ -73,10 +71,10 @@ export function CapsuleCard({
 
             {formulas.length > 0 && (
               <section>
-                <h4 className="text-sm font-bold uppercase tracking-widest text-teal">Important Formulas</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Reference formulas</h4>
                 <div className="mt-4 space-y-3">
                   {formulas.map((formula, index) => (
-                    <div key={index} className="rounded-xl border border-teal/10 bg-teal/5 p-4 font-mono text-sm text-teal">
+                    <div key={index} className="rounded-xl border border-teal/15 bg-teal/5 p-4 font-mono text-sm text-teal">
                       {formula}
                     </div>
                   ))}
@@ -86,14 +84,14 @@ export function CapsuleCard({
           </div>
 
           <section className="rounded-2xl border border-purple/10 bg-purple/5 p-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-purple">Study Tips</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Review prompts</h4>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {tips.map((tip, index) => (
                 <div key={index} className="flex gap-3">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-purple text-[10px] font-bold text-purple-foreground">
                     {index + 1}
                   </span>
-                  <p className="text-sm text-muted">{tip}</p>
+                  <p className="text-sm leading-6 text-muted">{tip}</p>
                 </div>
               ))}
             </div>
