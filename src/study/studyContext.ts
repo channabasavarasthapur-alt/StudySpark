@@ -6,6 +6,7 @@ export interface StudySession {
   id: string
   source: StudySessionSource
   title: string
+  relatedCapsuleId?: string
   startedAt: string
   completedAt: string
   durationMinutes: number
@@ -16,6 +17,7 @@ export interface ActiveStudySession {
   id: string
   source: StudySessionSource
   title: string
+  relatedCapsuleId?: string
   startedAt: string
   plannedMinutes: number
   status: 'running' | 'paused'
@@ -37,6 +39,12 @@ export interface StartSessionInput {
   source: StudySessionSource
   title: string
   plannedMinutes: number
+  relatedCapsuleId?: string
+}
+
+export interface CapsuleStudyStateInput {
+  capsuleId: string
+  title: string
 }
 
 export interface StudyContextValue {
@@ -45,6 +53,7 @@ export interface StudyContextValue {
   metrics: StudyMetrics
   elapsedSeconds: number
   startSession: (session: StartSessionInput) => void
+  removeCapsuleStudyState: (capsule: CapsuleStudyStateInput) => void
   pauseSession: () => void
   resumeSession: () => void
   endSession: () => void

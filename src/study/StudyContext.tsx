@@ -26,6 +26,7 @@ function isStudySession(value: unknown): value is StudySession {
       session.source === 'exam-prep' ||
       session.source === 'pomodoro') &&
     typeof session.title === 'string' &&
+    (session.relatedCapsuleId === undefined || typeof session.relatedCapsuleId === 'string') &&
     typeof session.startedAt === 'string' &&
     typeof session.completedAt === 'string' &&
     typeof session.durationMinutes === 'number' &&
@@ -48,6 +49,7 @@ function isActiveStudySession(value: unknown): value is ActiveStudySession {
       session.source === 'exam-prep' ||
       session.source === 'pomodoro') &&
     typeof session.title === 'string' &&
+    (session.relatedCapsuleId === undefined || typeof session.relatedCapsuleId === 'string') &&
     typeof session.startedAt === 'string' &&
     typeof session.plannedMinutes === 'number' &&
     (session.status === 'running' || session.status === 'paused') &&
@@ -179,7 +181,7 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       activeSession,
       metrics,
       elapsedSeconds,
-      startSession: ({ source, title, plannedMinutes }: StartSessionInput) => {
+      startSession: ({ source, title, plannedMinutes, relatedCapsuleId }: StartSessionInput) => {
         setActiveSession((currentSession) => {
           if (currentSession) {
             return currentSession
@@ -191,12 +193,35 @@ export function StudyProvider({ children }: { children: ReactNode }) {
             id: `${source}-${startedAt.getTime()}`,
             source,
             title,
+            relatedCapsuleId,
             startedAt: startedAt.toISOString(),
             plannedMinutes: Math.max(1, Math.round(plannedMinutes)),
             status: 'running',
             accumulatedPausedMs: 0,
           }
         })
+        setNow(Date.now())
+      },
+      removeCapsuleStudyState: ({ capsuleId, title }) => {
+        setActiveSession((currentSession) => {
+          if (
+            !currentSession ||
+            currentSession.source !== 'capsule' ||
+            (currentSession.relatedCapsuleId !== capsuleId &&
+              !(currentSession.relatedCapsuleId === undefined && currentSession.title === title))
+          ) {
+            return currentSession
+          }
+
+          return null
+        })
+        setSessions((currentSessions) =>
+          currentSessions.filter(
+            (session) =>
+              session.source !== 'capsule' ||
+              (session.relatedCapsuleId !== capsuleId && !(session.relatedCapsuleId === undefined && session.title === title)),
+          ),
+        )
         setNow(Date.now())
       },
       pauseSession: () => {
@@ -245,6 +270,7 @@ export function StudyProvider({ children }: { children: ReactNode }) {
               id: currentSession.id,
               source: currentSession.source,
               title: currentSession.title,
+              relatedCapsuleId: currentSession.relatedCapsuleId,
               startedAt: currentSession.startedAt,
               completedAt: completedAt.toISOString(),
               durationMinutes,

@@ -14,6 +14,7 @@ import {
   Eye,
   RotateCcw,
   Atom,
+  Save,
 } from 'lucide-react'
 import type { View } from '../types/navigation'
 import { capsuleInsights, loadingMessages, sampleCapsule } from '../mocks/capsuleData'
@@ -23,17 +24,12 @@ interface StudyCapsulesPageProps {
   onNavigate: (view: View) => void
 }
 
-interface SavedCapsule {
+interface StoredCapsule {
   id: string
-  topic: string
-  summary: string
-  concepts: string[]
-  formulas: string[]
-  tips: string[]
-  time: string
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  sourceMaterial: string
+  title: string
+  subject: string
   createdAt: string
+  content: string
 }
 
 const storageKey = 'studyspark.capsuleLibrary'
@@ -54,7 +50,57 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-function loadCapsules(): SavedCapsule[] {
+function isStoredCapsule(value: unknown): value is StoredCapsule {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const capsule = value as Partial<StoredCapsule>
+
+  return (
+    typeof capsule.id === 'string' &&
+    typeof capsule.title === 'string' &&
+    typeof capsule.subject === 'string' &&
+    typeof capsule.createdAt === 'string' &&
+    typeof capsule.content === 'string'
+  )
+}
+
+function migrateStoredCapsule(value: unknown): StoredCapsule | null {
+  if (isStoredCapsule(value)) {
+    return value
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const legacyCapsule = value as {
+    id?: unknown
+    topic?: unknown
+    createdAt?: unknown
+    sourceMaterial?: unknown
+  }
+
+  if (
+    typeof legacyCapsule.id !== 'string' ||
+    typeof legacyCapsule.topic !== 'string' ||
+    typeof legacyCapsule.createdAt !== 'string' ||
+    typeof legacyCapsule.sourceMaterial !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    id: legacyCapsule.id,
+    title: legacyCapsule.topic,
+    subject: inferSubject(legacyCapsule.sourceMaterial),
+    createdAt: legacyCapsule.createdAt,
+    content: legacyCapsule.sourceMaterial,
+  }
+}
+
+function loadCapsules(): StoredCapsule[] {
   try {
     const storedValue = localStorage.getItem(storageKey)
 
@@ -68,14 +114,14 @@ function loadCapsules(): SavedCapsule[] {
       return []
     }
 
-    return parsedValue
+    return parsedValue.map(migrateStoredCapsule).filter((capsule): capsule is StoredCapsule => Boolean(capsule))
   } catch {
     return []
   }
 }
 
-function getGeneratedTopic(sourceMaterial: string) {
-  const firstLine = sourceMaterial
+function getGeneratedTitle(content: string) {
+  const firstLine = content
     .split(/\r?\n/)
     .map((line) => line.trim())
     .find(Boolean)
@@ -87,18 +133,32 @@ function getGeneratedTopic(sourceMaterial: string) {
   return firstLine.length > 56 ? `${firstLine.slice(0, 53)}...` : firstLine
 }
 
-function createCapsule(sourceMaterial: string, plannedMinutes: number): SavedCapsule {
+function inferSubject(content: string) {
+  const firstLine = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean)
+
+  if (!firstLine) {
+    return 'General'
+  }
+
+  const subjectMatch = firstLine.match(/^subject:\s*(.+)$/i)
+
+  if (subjectMatch?.[1]) {
+    return subjectMatch[1].trim().slice(0, 40) || 'General'
+  }
+
+  return firstLine.split(/[,:;-]/)[0]?.trim().slice(0, 40) || 'General'
+}
+
+function createCapsule(content: string): StoredCapsule {
   return {
     id: crypto.randomUUID(),
-    topic: getGeneratedTopic(sourceMaterial),
-    summary: sampleCapsule.summary,
-    concepts: sampleCapsule.concepts,
-    formulas: sampleCapsule.formulas,
-    tips: sampleCapsule.tips,
-    time: `${plannedMinutes}m`,
-    difficulty: sampleCapsule.difficulty,
-    sourceMaterial,
+    title: getGeneratedTitle(content),
+    subject: inferSubject(content),
     createdAt: new Date().toISOString(),
+    content,
   }
 }
 
@@ -106,13 +166,14 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
-  const [selectedCapsule, setSelectedCapsule] = useState<SavedCapsule | null>(null)
-  const [capsules, setCapsules] = useState<SavedCapsule[]>(() => loadCapsules())
-  const { activeSession, elapsedSeconds, endSession, pauseSession, resumeSession, startSession } = useStudy()
+  const [selectedCapsule, setSelectedCapsule] = useState<StoredCapsule | null>(null)
+  const [capsules, setCapsules] = useState<StoredCapsule[]>(() => loadCapsules())
+  const { activeSession, elapsedSeconds, endSession, pauseSession, removeCapsuleStudyState, resumeSession, startSession } = useStudy()
   const isCapsuleSessionActive = activeSession?.source === 'capsule'
   const hasOtherActiveSession = Boolean(activeSession && !isCapsuleSessionActive)
   const elapsedDisplay = formatElapsed(elapsedSeconds)
   const estimatedReadMinutes = Math.max(1, Math.ceil(input.length / 500))
+  const selectedCapsuleSaved = Boolean(selectedCapsule && capsules.some((capsule) => capsule.id === selectedCapsule.id))
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(capsules))
@@ -120,14 +181,8 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
   const handleGenerate = () => {
     if (!input.trim()) return
-    const plannedMinutes = estimatedReadMinutes
-    const nextCapsule = createCapsule(input.trim(), plannedMinutes)
+    const nextCapsule = createCapsule(input.trim())
 
-    startSession({
-      source: 'capsule',
-      title: nextCapsule.topic,
-      plannedMinutes,
-    })
     setIsGenerating(true)
     setSelectedCapsule(null)
     setLoadingStep(0)
@@ -138,7 +193,6 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
     setTimeout(() => {
       clearInterval(interval)
-      setCapsules((currentCapsules) => [nextCapsule, ...currentCapsules])
       setSelectedCapsule(nextCapsule)
       setIsGenerating(false)
       setInput('')
@@ -146,19 +200,37 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
     }, 3200)
   }
 
-  const handleViewCapsule = (capsule: SavedCapsule) => {
+  const handleSaveCapsule = (capsule: StoredCapsule) => {
+    setCapsules((currentCapsules) => {
+      if (currentCapsules.some((currentCapsule) => currentCapsule.id === capsule.id)) {
+        return currentCapsules
+      }
+
+      return [capsule, ...currentCapsules]
+    })
+  }
+
+  const handleOpenCapsule = (capsule: StoredCapsule) => {
     setSelectedCapsule(capsule)
     window.scrollTo({ top: 500, behavior: 'smooth' })
   }
 
-  const handleReopenCapsule = (capsule: SavedCapsule) => {
+  const handleResumeStudy = (capsule: StoredCapsule) => {
+    const savedCapsule = capsules.find((currentCapsule) => currentCapsule.id === capsule.id)
+
+    if (!savedCapsule) {
+      setSelectedCapsule(null)
+      return
+    }
+
     setSelectedCapsule(capsule)
 
     if (!activeSession) {
       startSession({
         source: 'capsule',
-        title: capsule.topic,
-        plannedMinutes: Number.parseInt(capsule.time, 10) || 1,
+        title: capsule.title,
+        plannedMinutes: Math.max(1, Math.ceil(capsule.content.length / 500)),
+        relatedCapsuleId: capsule.id,
       })
     }
 
@@ -166,10 +238,19 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   }
 
   const handleDeleteCapsule = (capsuleId: string) => {
+    const capsuleToDelete = capsules.find((capsule) => capsule.id === capsuleId)
+
     setCapsules((currentCapsules) => currentCapsules.filter((capsule) => capsule.id !== capsuleId))
 
     if (selectedCapsule?.id === capsuleId) {
       setSelectedCapsule(null)
+    }
+
+    if (capsuleToDelete) {
+      removeCapsuleStudyState({
+        capsuleId: capsuleToDelete.id,
+        title: capsuleToDelete.title,
+      })
     }
   }
 
@@ -190,7 +271,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
             Convert notes into focused study material.
           </h1>
           <p className="mt-5 text-base leading-7 text-muted sm:text-lg">
-            Create a structured capsule, save it to your library, and reopen it whenever you need another study pass.
+            Create a structured capsule, save it to your library, and resume study whenever you need another pass.
           </p>
         </div>
       </header>
@@ -203,7 +284,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Step 1</p>
                 <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Source material</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                  Paste class notes, textbook excerpts, or a revision outline. The finished capsule is saved locally.
+                  Paste class notes, textbook excerpts, or a revision outline. Save the finished capsule locally after generation.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wider text-muted">
@@ -221,7 +302,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-xl text-sm leading-6 text-muted">
-                Saved capsules appear in the library below and remain available after refresh.
+                Generated capsules can be saved to the library below and remain available after refresh.
               </p>
               <Button
                 onClick={handleGenerate}
@@ -287,7 +368,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 <p className="text-sm leading-6 text-muted">
                   {hasOtherActiveSession
                     ? 'Finish or pause the current active session before starting a capsule session.'
-                    : 'Create or reopen a capsule to begin a focused study session.'}
+                    : 'Create or resume a capsule to begin a focused study session.'}
                 </p>
               </div>
             )}
@@ -337,27 +418,37 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Capsule details</p>
                   <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Academic study sheet</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                    Saved {formatDate(selectedCapsule.createdAt)}. Reopen the capsule to start another timed study pass.
+                    {selectedCapsuleSaved ? `Saved ${formatDate(selectedCapsule.createdAt)}.` : 'Generated capsule is ready to save.'} Resume the capsule to start another timed study pass.
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleReopenCapsule(selectedCapsule)}
-                  disabled={Boolean(activeSession)}
-                  className="gap-2 self-start sm:self-auto"
-                >
-                  <RotateCcw size={16} />
-                  Reopen
-                </Button>
+                <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+                  {!selectedCapsuleSaved && (
+                    <Button variant="secondary" onClick={() => handleSaveCapsule(selectedCapsule)} className="gap-2">
+                      <Save size={16} />
+                      Save Capsule
+                    </Button>
+                  )}
+                  {selectedCapsuleSaved && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleResumeStudy(selectedCapsule)}
+                      disabled={Boolean(activeSession)}
+                      className="gap-2"
+                    >
+                      <RotateCcw size={16} />
+                      Resume Study
+                    </Button>
+                  )}
+                </div>
               </div>
               <CapsuleCard
-                topic={selectedCapsule.topic}
-                summary={selectedCapsule.summary}
-                concepts={selectedCapsule.concepts}
-                formulas={selectedCapsule.formulas}
-                tips={selectedCapsule.tips}
-                time={selectedCapsule.time}
-                difficulty={selectedCapsule.difficulty}
+                topic={selectedCapsule.title}
+                summary={sampleCapsule.summary}
+                concepts={sampleCapsule.concepts}
+                formulas={sampleCapsule.formulas}
+                tips={sampleCapsule.tips}
+                time={`${Math.max(1, Math.ceil(selectedCapsule.content.length / 500))}m`}
+                difficulty={sampleCapsule.difficulty}
                 icon={Atom}
               />
             </div>
@@ -379,9 +470,10 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 />
               ))}
               <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Source</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Content</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{selectedCapsule.subject}</p>
                 <p className="mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-muted">
-                  {selectedCapsule.sourceMaterial}
+                  {selectedCapsule.content}
                 </p>
               </section>
             </aside>
@@ -426,29 +518,29 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                         <Atom size={21} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="truncate text-lg font-extrabold text-foreground">{capsule.topic}</h3>
+                        <h3 className="truncate text-lg font-extrabold text-foreground">{capsule.title}</h3>
                         <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                          {formatDate(capsule.createdAt)} - {capsule.time}
+                          {capsule.subject} - {formatDate(capsule.createdAt)}
                         </p>
                       </div>
                     </div>
 
-                    <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted">{capsule.summary}</p>
+                    <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted">{capsule.content}</p>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleViewCapsule(capsule)} className="gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleOpenCapsule(capsule)} className="gap-2">
                         <Eye size={14} />
-                        Details
+                        Open Capsule
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleReopenCapsule(capsule)}
+                        onClick={() => handleResumeStudy(capsule)}
                         disabled={Boolean(activeSession)}
                         className="gap-2"
                       >
                         <RotateCcw size={14} />
-                        Reopen
+                        Resume Study
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteCapsule(capsule.id)} className="gap-2 text-muted">
                         <Trash2 size={14} />
