@@ -4,8 +4,9 @@ interface CapsuleCardProps {
   topic: string
   summary: string
   concepts: string[]
-  formulas: string[]
-  tips: string[]
+  terms: string[]
+  revisionPoints: string[]
+  practiceQuestions: string[]
   time: string
   difficulty: 'Easy' | 'Medium' | 'Hard'
   icon: LucideIcon
@@ -15,8 +16,9 @@ export function CapsuleCard({
   topic,
   summary,
   concepts,
-  formulas,
-  tips,
+  terms,
+  revisionPoints,
+  practiceQuestions,
   time,
   difficulty,
   icon: Icon
@@ -69,13 +71,13 @@ export function CapsuleCard({
               </ul>
             </section>
 
-            {formulas.length > 0 && (
+            {terms.length > 0 && (
               <section>
-                <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Reference formulas</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Important terms</h4>
                 <div className="mt-4 space-y-3">
-                  {formulas.map((formula, index) => (
-                    <div key={index} className="rounded-xl border border-teal/15 bg-teal/5 p-4 font-mono text-sm text-teal">
-                      {formula}
+                  {terms.map((term, index) => (
+                    <div key={index} className="rounded-xl border border-teal/15 bg-teal/5 p-4 text-sm font-semibold text-teal">
+                      {term}
                     </div>
                   ))}
                 </div>
@@ -84,14 +86,25 @@ export function CapsuleCard({
           </div>
 
           <section className="rounded-2xl border border-purple/10 bg-purple/5 p-6">
-            <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Review prompts</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Quick revision points</h4>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {tips.map((tip, index) => (
+              {revisionPoints.map((point, index) => (
                 <div key={index} className="flex gap-3">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-purple text-[10px] font-bold text-purple-foreground">
                     {index + 1}
                   </span>
-                  <p className="text-sm leading-6 text-muted">{tip}</p>
+                  <p className="text-sm leading-6 text-muted">{point}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Practice questions</h4>
+            <div className="mt-4 grid gap-3">
+              {practiceQuestions.map((question, index) => (
+                <div key={index} className="rounded-xl border border-border bg-background/70 p-4 text-sm font-medium leading-6 text-foreground">
+                  {question}
                 </div>
               ))}
             </div>

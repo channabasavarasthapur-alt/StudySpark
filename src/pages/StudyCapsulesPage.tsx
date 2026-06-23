@@ -17,7 +17,8 @@ import {
   Save,
 } from 'lucide-react'
 import type { View } from '../types/navigation'
-import { capsuleInsights, loadingMessages, sampleCapsule } from '../mocks/capsuleData'
+import { capsuleInsights, loadingMessages } from '../mocks/capsuleData'
+import { generateCapsuleFromNotes, type GeneratedCapsuleContent } from '../study/capsuleGenerator'
 import { useStudy } from '../study/studyContext'
 
 interface StudyCapsulesPageProps {
@@ -30,6 +31,7 @@ interface StoredCapsule {
   subject: string
   createdAt: string
   content: string
+  generated: GeneratedCapsuleContent
 }
 
 const storageKey = 'studyspark.capsuleLibrary'
@@ -50,6 +52,31 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+function createFallbackGeneratedContent(content: string): GeneratedCapsuleContent {
+  const firstLine = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean)
+  const fallbackPoint = firstLine || 'Review the original notes carefully.'
+
+  return {
+    summary: fallbackPoint,
+    keyConcepts: [fallbackPoint],
+    importantTerms: [inferSubject(content)],
+    quickRevisionPoints: [fallbackPoint],
+    practiceQuestions: [`Explain ${inferSubject(content)} in your own words.`],
+    difficulty: 'Easy',
+  }
+}
+
+function safelyGenerateCapsuleContent(content: string) {
+  try {
+    return generateCapsuleFromNotes(content)
+  } catch {
+    return createFallbackGeneratedContent(content)
+  }
+}
+
 function isStoredCapsule(value: unknown): value is StoredCapsule {
   if (!value || typeof value !== 'object') {
     return false
@@ -62,7 +89,29 @@ function isStoredCapsule(value: unknown): value is StoredCapsule {
     typeof capsule.title === 'string' &&
     typeof capsule.subject === 'string' &&
     typeof capsule.createdAt === 'string' &&
-    typeof capsule.content === 'string'
+    typeof capsule.content === 'string' &&
+    isGeneratedCapsuleContent(capsule.generated)
+  )
+}
+
+function isGeneratedCapsuleContent(value: unknown): value is GeneratedCapsuleContent {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const generated = value as Partial<GeneratedCapsuleContent>
+
+  return (
+    typeof generated.summary === 'string' &&
+    Array.isArray(generated.keyConcepts) &&
+    generated.keyConcepts.every((concept) => typeof concept === 'string') &&
+    Array.isArray(generated.importantTerms) &&
+    generated.importantTerms.every((term) => typeof term === 'string') &&
+    Array.isArray(generated.quickRevisionPoints) &&
+    generated.quickRevisionPoints.every((point) => typeof point === 'string') &&
+    Array.isArray(generated.practiceQuestions) &&
+    generated.practiceQuestions.every((question) => typeof question === 'string') &&
+    (generated.difficulty === 'Easy' || generated.difficulty === 'Medium' || generated.difficulty === 'Hard')
   )
 }
 
@@ -75,28 +124,44 @@ function migrateStoredCapsule(value: unknown): StoredCapsule | null {
     return null
   }
 
-  const legacyCapsule = value as {
+  const capsule = value as {
     id?: unknown
+    title?: unknown
+    subject?: unknown
+    content?: unknown
+    generated?: unknown
     topic?: unknown
     createdAt?: unknown
     sourceMaterial?: unknown
   }
+  const id = typeof capsule.id === 'string' ? capsule.id : null
+  const createdAt = typeof capsule.createdAt === 'string' ? capsule.createdAt : null
+  const content =
+    typeof capsule.content === 'string'
+      ? capsule.content
+      : typeof capsule.sourceMaterial === 'string'
+        ? capsule.sourceMaterial
+        : null
+  const title =
+    typeof capsule.title === 'string'
+      ? capsule.title
+      : typeof capsule.topic === 'string'
+        ? capsule.topic
+        : content
+          ? getGeneratedTitle(content)
+          : null
 
-  if (
-    typeof legacyCapsule.id !== 'string' ||
-    typeof legacyCapsule.topic !== 'string' ||
-    typeof legacyCapsule.createdAt !== 'string' ||
-    typeof legacyCapsule.sourceMaterial !== 'string'
-  ) {
+  if (!id || !createdAt || !content || !title) {
     return null
   }
 
   return {
-    id: legacyCapsule.id,
-    title: legacyCapsule.topic,
-    subject: inferSubject(legacyCapsule.sourceMaterial),
-    createdAt: legacyCapsule.createdAt,
-    content: legacyCapsule.sourceMaterial,
+    id,
+    title,
+    subject: typeof capsule.subject === 'string' ? capsule.subject : inferSubject(content),
+    createdAt,
+    content,
+    generated: isGeneratedCapsuleContent(capsule.generated) ? capsule.generated : safelyGenerateCapsuleContent(content),
   }
 }
 
@@ -127,7 +192,7 @@ function getGeneratedTitle(content: string) {
     .find(Boolean)
 
   if (!firstLine) {
-    return sampleCapsule.topic
+    return 'Study Capsule'
   }
 
   return firstLine.length > 56 ? `${firstLine.slice(0, 53)}...` : firstLine
@@ -159,6 +224,7 @@ function createCapsule(content: string): StoredCapsule {
     subject: inferSubject(content),
     createdAt: new Date().toISOString(),
     content,
+    generated: generateCapsuleFromNotes(content),
   }
 }
 
@@ -166,6 +232,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
+  const [generationError, setGenerationError] = useState<string | null>(null)
   const [selectedCapsule, setSelectedCapsule] = useState<StoredCapsule | null>(null)
   const [capsules, setCapsules] = useState<StoredCapsule[]>(() => loadCapsules())
   const { activeSession, elapsedSeconds, endSession, pauseSession, removeCapsuleStudyState, resumeSession, startSession } = useStudy()
@@ -180,11 +247,25 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   }, [capsules])
 
   const handleGenerate = () => {
-    if (!input.trim()) return
-    const nextCapsule = createCapsule(input.trim())
+    const trimmedInput = input.trim()
+
+    if (!trimmedInput) {
+      setGenerationError('Paste study notes before creating a capsule.')
+      return
+    }
+
+    let nextCapsule: StoredCapsule
+
+    try {
+      nextCapsule = createCapsule(trimmedInput)
+    } catch (error) {
+      setGenerationError(error instanceof Error ? error.message : 'StudySpark could not read enough structure from those notes.')
+      return
+    }
 
     setIsGenerating(true)
     setSelectedCapsule(null)
+    setGenerationError(null)
     setLoadingStep(0)
 
     const interval = setInterval(() => {
@@ -323,6 +404,11 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 )}
               </Button>
             </div>
+            {generationError && (
+              <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm font-medium leading-6 text-red-500">
+                {generationError}
+              </div>
+            )}
           </div>
 
           <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
@@ -443,12 +529,13 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
               </div>
               <CapsuleCard
                 topic={selectedCapsule.title}
-                summary={sampleCapsule.summary}
-                concepts={sampleCapsule.concepts}
-                formulas={sampleCapsule.formulas}
-                tips={sampleCapsule.tips}
+                summary={selectedCapsule.generated.summary}
+                concepts={selectedCapsule.generated.keyConcepts}
+                terms={selectedCapsule.generated.importantTerms}
+                revisionPoints={selectedCapsule.generated.quickRevisionPoints}
+                practiceQuestions={selectedCapsule.generated.practiceQuestions}
                 time={`${Math.max(1, Math.ceil(selectedCapsule.content.length / 500))}m`}
-                difficulty={sampleCapsule.difficulty}
+                difficulty={selectedCapsule.generated.difficulty}
                 icon={Atom}
               />
             </div>

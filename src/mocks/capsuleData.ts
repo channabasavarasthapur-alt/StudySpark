@@ -42,8 +42,9 @@ export interface RecentSubjectCardData {
 export const loadingMessages = [
   'Reading your notes...',
   'Finding key concepts...',
-  'Making main points...',
-  'Organizing formulas...',
+  'Building revision points...',
+  'Finding important terms...',
+  'Writing practice questions...',
   'Almost done...',
 ]
 
