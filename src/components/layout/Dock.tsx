@@ -23,6 +23,18 @@ function formatElapsed(seconds: number) {
   return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
+function getSessionView(source: StudySessionSource): View {
+  if (source === 'capsule') {
+    return 'capsules'
+  }
+
+  if (source === 'exam-prep') {
+    return 'exams'
+  }
+
+  return 'dashboard'
+}
+
 export function Dock({ activeView, onNavigate }: DockProps) {
   const { activeSession, elapsedSeconds } = useStudy()
   const items: { id: View; icon: LucideIcon; label: string }[] = [
@@ -38,7 +50,8 @@ export function Dock({ activeView, onNavigate }: DockProps) {
       {activeSession && (
         <button
           type="button"
-          onClick={() => onNavigate(activeSession.source === 'capsule' ? 'capsules' : 'dashboard')}
+          onClick={() => onNavigate(getSessionView(activeSession.source))}
+          aria-label={`Return to active ${sourceLabels[activeSession.source]} session, ${formatElapsed(elapsedSeconds)} elapsed`}
           className="nav-session-pill mx-auto mb-2 flex w-fit max-w-full items-center gap-2 rounded-full border border-purple/20 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-lg transition-colors duration-200 hover:border-purple/35 hover:bg-purple/5"
           title="Return to active study session"
         >
@@ -59,7 +72,10 @@ export function Dock({ activeView, onNavigate }: DockProps) {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onNavigate(item.id)}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.label}
               className={`group relative flex h-12 flex-1 min-w-0 items-center justify-center rounded-xl transition-colors duration-200 ${
                 isActive
                   ? 'bg-purple text-purple-foreground shadow-sm'

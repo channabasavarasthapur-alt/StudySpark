@@ -367,7 +367,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
               <div className="session-state-transition mt-6 rounded-2xl border border-dashed border-border bg-background/60 p-5">
                 <p className="text-sm leading-6 text-muted">
                   {hasOtherActiveSession
-                    ? 'Finish or pause the current active session before starting a capsule session.'
+                    ? 'Finish the current active session before starting a capsule session.'
                     : 'Create or resume a capsule to begin a focused study session.'}
                 </p>
               </div>
@@ -496,10 +496,13 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
               <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-background text-muted">
                 <BookOpen size={24} />
               </div>
-              <h3 className="mt-4 text-lg font-extrabold text-foreground">Library is empty</h3>
+              <h3 className="mt-4 text-lg font-extrabold text-foreground">No capsules saved</h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-                Generated capsules will be saved here on this device.
+                Create a capsule from your notes, then save it here for review and study sessions.
               </p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                Create First Capsule
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

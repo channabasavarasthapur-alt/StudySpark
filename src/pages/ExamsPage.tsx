@@ -1,32 +1,63 @@
 import { useMemo } from 'react'
-import { ArrowLeft, BookOpen, CalendarClock, CheckCircle2, Clock, Flame, Target, Trophy } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarClock, CheckCircle2, Clock, Flame, Pause, Play, Square, Target, Trophy } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { ReadinessBar } from '../components/ui/ReadinessBar'
 import { ThemeToggle } from '../components/ThemeToggle'
 import type { View } from '../types/navigation'
 import { useStudy, type StudySession } from '../study/studyContext'
+import { parseSetupSubjects, useSetupPreferences } from '../study/setupPreferences'
 
 interface ExamsPageProps {
   onNavigate: (view: View) => void
 }
 
-interface SetupPreferences {
-  subjects?: string
-  examDate?: string
-  dailyStudyMinutes?: number
+interface CompletedStudyPlanTask {
+  id: string
+  title: string
+  subject: string
+  durationMinutes: number
+  completedAt: string
+  dateKey: string
 }
 
-const setupStorageKey = 'studyspark.setupPreferences'
-const fallbackSubjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology']
+const completedTasksStorageKey = 'studyspark.completedStudyPlanTasks'
 
-function loadSetupPreferences(): SetupPreferences {
+function loadCompletedTasks(): CompletedStudyPlanTask[] {
   try {
-    const storedValue = localStorage.getItem(setupStorageKey)
+    const storedValue = localStorage.getItem(completedTasksStorageKey)
+    const parsedValue: unknown = storedValue ? JSON.parse(storedValue) : []
 
-    return storedValue ? (JSON.parse(storedValue) as SetupPreferences) : {}
+    if (!Array.isArray(parsedValue)) {
+      return []
+    }
+
+    return parsedValue.filter((task): task is CompletedStudyPlanTask => {
+      const possibleTask = task as Partial<CompletedStudyPlanTask>
+
+      return (
+        typeof possibleTask.id === 'string' &&
+        typeof possibleTask.title === 'string' &&
+        typeof possibleTask.subject === 'string' &&
+        typeof possibleTask.durationMinutes === 'number' &&
+        typeof possibleTask.completedAt === 'string' &&
+        typeof possibleTask.dateKey === 'string'
+      )
+    })
   } catch {
-    return {}
+    return []
   }
+}
+
+function formatExamDate(examDate?: string) {
+  if (!examDate) {
+    return 'Not set'
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(`${examDate}T00:00:00`))
 }
 
 function formatCountdown(examDate?: string) {
@@ -66,96 +97,132 @@ function formatCountdown(examDate?: string) {
   }
 }
 
-function getSubjects(setupSubjects?: string) {
-  const parsedSubjects = setupSubjects
-    ?.split(',')
-    .map((subject) => subject.trim())
-    .filter(Boolean)
+function getWeekStart(date: Date) {
+  const weekStart = new Date(date)
+  const day = weekStart.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  weekStart.setDate(weekStart.getDate() + diff)
+  weekStart.setHours(0, 0, 0, 0)
 
-  return parsedSubjects && parsedSubjects.length > 0 ? parsedSubjects : fallbackSubjects
+  return weekStart
 }
 
-function getSubjectReadiness(subject: string, sessions: StudySession[], fallbackReadiness: number) {
+function getWeekEnd(date: Date) {
+  const weekEnd = getWeekStart(date)
+  weekEnd.setDate(weekEnd.getDate() + 7)
+
+  return weekEnd
+}
+
+function getSubjectReadiness(
+  subject: string,
+  sessions: StudySession[],
+  completedTasks: CompletedStudyPlanTask[],
+  dailyStudyMinutes: number,
+  subjectCount: number,
+) {
   const subjectSessions = sessions.filter((session) => session.title.toLowerCase().includes(subject.toLowerCase()))
+  const subjectTasks = completedTasks.filter((task) => task.subject.toLowerCase() === subject.toLowerCase())
+  const sessionStudiedMinutes = subjectSessions.reduce((total, session) => total + session.durationMinutes, 0)
+  const taskStudiedMinutes = subjectTasks.reduce((total, task) => total + task.durationMinutes, 0)
+  const studiedMinutes = sessionStudiedMinutes + taskStudiedMinutes
+  const sessionPlannedMinutes = subjectSessions.reduce((total, session) => total + session.plannedMinutes, 0)
+  const dailySubjectMinutes = subjectCount > 0 ? Math.max(1, Math.round(dailyStudyMinutes / subjectCount)) : 0
+  const taskPlannedMinutes = Math.max(dailySubjectMinutes, subjectTasks.length * dailySubjectMinutes)
+  const plannedMinutes = Math.max(sessionPlannedMinutes + taskPlannedMinutes, dailySubjectMinutes)
 
-  if (subjectSessions.length === 0) {
-    return {
-      readiness: fallbackReadiness,
-      studiedMinutes: 0,
-      sessions: 0,
-    }
-  }
-
-  const plannedMinutes = subjectSessions.reduce((total, session) => total + session.plannedMinutes, 0)
-  const studiedMinutes = subjectSessions.reduce((total, session) => total + session.durationMinutes, 0)
   const readiness = plannedMinutes > 0 ? Math.min(100, Math.round((studiedMinutes / plannedMinutes) * 100)) : 0
 
   return {
     readiness,
     studiedMinutes,
     sessions: subjectSessions.length,
+    completedTasks: subjectTasks.length,
   }
 }
 
-function getRecommendedTask(metrics: ReturnType<typeof useStudy>['metrics'], activeTitle?: string) {
+function getRecommendedSubject(subjectReadiness: { subject: string; readiness: number; studiedMinutes: number }[], activeTitle?: string) {
   if (activeTitle) {
     return {
-      title: activeTitle,
+      subject: activeTitle,
       description: 'Continue the active session before starting new exam prep.',
       minutes: 'In progress',
     }
   }
 
-  if (metrics.completedSessions === 0) {
+  const nextSubject = [...subjectReadiness].sort((first, second) => {
+    if (first.readiness === second.readiness) {
+      return first.studiedMinutes - second.studiedMinutes
+    }
+
+    return first.readiness - second.readiness
+  })[0]
+
+  if (!nextSubject) {
     return {
-      title: 'Create your first study capsule',
-      description: 'Start with one clear topic so readiness has real study data behind it.',
+      subject: 'Set up subjects',
+      description: 'Add subjects in setup to generate exam recommendations.',
       minutes: '20m',
     }
   }
 
-  if (metrics.toReview > 0) {
-    return {
-      title: 'Review unfinished study sessions',
-      description: `${metrics.toReview} session${metrics.toReview === 1 ? '' : 's'} ended before the planned time.`,
-      minutes: '15m',
-    }
-  }
-
   return {
-    title: 'Exam prep mixed review',
-    description: 'Run a short review across recent topics to keep recall fresh.',
+    subject: nextSubject.subject,
+    description: `${nextSubject.subject} has the lowest readiness signal right now.`,
     minutes: '25m',
   }
 }
 
 export default function ExamsPage({ onNavigate }: ExamsPageProps) {
-  const { activeSession, metrics, sessions, startSession } = useStudy()
-  const setupPreferences = useMemo(() => loadSetupPreferences(), [])
-  const subjects = useMemo(() => getSubjects(setupPreferences.subjects), [setupPreferences.subjects])
+  const { activeSession, elapsedSeconds, endSession, metrics, pauseSession, resumeSession, sessions, startSession } = useStudy()
+  const setupPreferences = useSetupPreferences()
+  const completedTasks = useMemo(() => loadCompletedTasks(), [])
+  const subjects = useMemo(() => parseSetupSubjects(setupPreferences.subjects, []), [setupPreferences.subjects])
+  const dailyStudyMinutes =
+    typeof setupPreferences.dailyStudyMinutes === 'number' && Number.isFinite(setupPreferences.dailyStudyMinutes)
+      ? Math.max(0, setupPreferences.dailyStudyMinutes)
+      : 90
+  const availableDays = Object.values(setupPreferences.weeklyAvailability).filter(Boolean).length
+  const hasExamConfigured = Boolean(setupPreferences.examDate)
   const countdown = useMemo(() => formatCountdown(setupPreferences.examDate), [setupPreferences.examDate])
-  const recommendedTask = getRecommendedTask(metrics, activeSession?.title)
+  const weekStart = getWeekStart(new Date())
+  const weekEnd = getWeekEnd(new Date())
+  const completedMinutesThisWeek = completedTasks
+    .filter((task) => {
+      const completedAt = new Date(task.completedAt)
+
+      return completedAt >= weekStart && completedAt < weekEnd
+    })
+    .reduce((total, task) => total + task.durationMinutes, 0)
+  const totalPlannedMinutesThisWeek = dailyStudyMinutes * availableDays
+  const weeklyCompletionPercentage =
+    totalPlannedMinutesThisWeek > 0 ? Math.min(100, Math.round((completedMinutesThisWeek / totalPlannedMinutesThisWeek) * 100)) : 0
   const subjectReadiness = subjects.map((subject) => ({
     subject,
-    ...getSubjectReadiness(subject, sessions, metrics.readinessPercentage),
+    ...getSubjectReadiness(subject, sessions, completedTasks, dailyStudyMinutes, subjects.length),
   }))
+  const recommendedSubject = getRecommendedSubject(subjectReadiness, activeSession?.title)
 
-  const handleStartRecommendedTask = () => {
+  const handleStartRecommendedSubject = () => {
     if (activeSession) {
       return
     }
 
-    if (metrics.completedSessions === 0) {
-      onNavigate('capsules')
+    if (!hasExamConfigured || !subjects.includes(recommendedSubject.subject)) {
+      onNavigate('setup')
       return
     }
 
     startSession({
       source: 'exam-prep',
-      title: recommendedTask.title,
-      plannedMinutes: Number.parseInt(recommendedTask.minutes, 10) || 25,
+      title: `${recommendedSubject.subject} exam review`,
+      plannedMinutes: Number.parseInt(recommendedSubject.minutes, 10) || 25,
     })
   }
+
+  const activeMinutes = Math.floor(elapsedSeconds / 60)
+  const activeSeconds = elapsedSeconds % 60
+  const activeElapsedDisplay = `${activeMinutes}:${String(activeSeconds).padStart(2, '0')}`
 
   return (
     <div className="min-h-screen bg-background pb-40 transition-colors duration-500">
@@ -180,6 +247,21 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
       </header>
 
       <main className="mx-auto mt-10 max-w-7xl space-y-6 px-4 sm:px-6">
+        {!hasExamConfigured && (
+          <section className="rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center shadow-sm">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-border bg-background text-muted">
+              <CalendarClock size={28} />
+            </div>
+            <h2 className="mt-5 text-xl font-extrabold text-foreground">No exam configured</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+              Add an exam date and subjects in setup to unlock countdowns, subject readiness, and exam recommendations.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-4">
+              Configure Exam
+            </Button>
+          </section>
+        )}
+
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-3">
@@ -187,9 +269,9 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
                 <Target size={20} />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Recommended next task</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{recommendedTask.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted">{recommendedTask.description}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Recommended next subject</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{recommendedSubject.subject}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">{recommendedSubject.description}</p>
               </div>
             </div>
 
@@ -200,14 +282,45 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted">Suggested block</p>
-                  <p className="text-lg font-extrabold text-foreground">{recommendedTask.minutes}</p>
+                  <p className="text-lg font-extrabold text-foreground">{recommendedSubject.minutes}</p>
                 </div>
               </div>
-              <Button onClick={handleStartRecommendedTask} disabled={Boolean(activeSession)} className="gap-2">
+              <Button onClick={handleStartRecommendedSubject} disabled={Boolean(activeSession)} className="gap-2">
                 <BookOpen size={16} />
-                {metrics.completedSessions === 0 ? 'Create Capsule' : 'Start Task'}
+                {hasExamConfigured ? 'Start Review' : 'Configure Exam'}
               </Button>
             </div>
+
+            {activeSession && (
+              <div className="mt-4 rounded-2xl border border-purple/20 bg-purple/5 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Active session</p>
+                    <h3 className="mt-1 truncate text-lg font-extrabold text-foreground">{activeSession.title}</h3>
+                    <p className="mt-1 text-sm font-semibold tabular-nums text-muted">
+                      {activeElapsedDisplay} studied - {activeSession.status}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:w-auto">
+                    {activeSession.status === 'running' ? (
+                      <Button variant="outline" size="sm" onClick={pauseSession} className="gap-2">
+                        <Pause size={14} />
+                        Pause
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={resumeSession} className="gap-2">
+                        <Play size={14} />
+                        Resume
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={endSession} className="gap-2">
+                      <Square size={14} />
+                      End
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
@@ -224,6 +337,10 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
                 <h2 className="text-3xl font-extrabold tracking-tight text-foreground">{countdown.label}</h2>
               </div>
             </div>
+            <div className="mt-5 rounded-xl border border-border bg-background/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Exam date</p>
+              <p className="mt-2 text-lg font-extrabold text-foreground">{formatExamDate(setupPreferences.examDate)}</p>
+            </div>
             <p className="mt-5 text-sm leading-6 text-muted">{countdown.helper}</p>
             {!setupPreferences.examDate && (
               <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-5">
@@ -239,19 +356,29 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Subject readiness</p>
               <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Subjects</h2>
             </div>
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {subjectReadiness.map((subject) => (
                 <article key={subject.subject} className="rounded-2xl border border-border bg-background/70 p-4">
                   <div className="mb-3 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <h3 className="truncate text-lg font-extrabold text-foreground">{subject.subject}</h3>
                       <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                        {subject.sessions} session{subject.sessions === 1 ? '' : 's'} - {subject.studiedMinutes}m studied
+                        {subject.sessions} session{subject.sessions === 1 ? '' : 's'} - {subject.completedTasks} task{subject.completedTasks === 1 ? '' : 's'}
                       </p>
                     </div>
                     <span className="text-xl font-extrabold text-foreground">{subject.readiness}%</span>
                   </div>
                   <ReadinessBar percentage={subject.readiness} label={`${subject.subject} readiness`} showTooltip={false} />
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-border bg-card p-3">
+                      <p className="text-lg font-extrabold text-foreground">{subject.studiedMinutes}m</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Completed</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-3">
+                      <p className="text-lg font-extrabold text-foreground">{subject.readiness}%</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Ready</p>
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
@@ -281,6 +408,27 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
                     </div>
                   )
                 })}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Weekly progress</p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{weeklyCompletionPercentage}% complete</h2>
+              <div className="mt-5 h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
+                <div
+                  className="h-full rounded-full bg-purple progress-transition"
+                  style={{ width: `${weeklyCompletionPercentage}%` }}
+                />
+              </div>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-border bg-background/70 p-4">
+                  <p className="text-2xl font-extrabold tabular-nums text-foreground">{totalPlannedMinutesThisWeek}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Planned minutes</p>
+                </div>
+                <div className="rounded-xl border border-border bg-background/70 p-4">
+                  <p className="text-2xl font-extrabold tabular-nums text-foreground">{completedMinutesThisWeek}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Completed minutes</p>
+                </div>
               </div>
             </section>
 

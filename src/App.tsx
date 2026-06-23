@@ -92,9 +92,9 @@ function AppShell() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => handleNavigate('dashboard')}>
-              Log in
+              Dashboard
             </Button>
-            <Button size="sm" onClick={() => handleNavigate('dashboard')}>
+            <Button size="sm" onClick={() => handleNavigate('setup')}>
               Get Started
             </Button>
           </div>
@@ -118,11 +118,11 @@ function AppShell() {
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" onClick={() => handleNavigate('dashboard')} className="w-full sm:w-auto">
-              Start Studying for Free
+            <Button size="lg" onClick={() => handleNavigate('setup')} className="w-full sm:w-auto">
+              Set Up a Study Plan
             </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto group">
-              See how it works
+            <Button variant="outline" size="lg" onClick={() => handleNavigate('setup')} className="w-full sm:w-auto group">
+              Open Demo Setup
               <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </div>
@@ -162,8 +162,8 @@ function AppShell() {
 
             <BentoCard
               className="md:col-span-4"
-              title="Quick Flashcards"
-              description="Make revision cards from your notes in a second."
+              title="Review Prompts"
+              description="Turn saved notes into focused questions for revision."
               icon={<Zap size={20} />}
             >
               <div className="mt-8 flex justify-center">
@@ -175,8 +175,8 @@ function AppShell() {
 
             <BentoCard
               className="md:col-span-4"
-              title="Study Timer"
-              description="Focus better with timers made for your tasks."
+              title="Study Sessions"
+              description="Track focused study time against planned tasks."
               icon={<Clock size={20} />}
             >
               <div className="mt-8 text-center">
@@ -212,8 +212,8 @@ function AppShell() {
               <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
                 Track focused sessions, organize capsules, and build a revision history that makes progress visible.
               </p>
-              <Button size="lg" onClick={() => handleNavigate('dashboard')} className="mt-10">
-                Join for Free
+              <Button size="lg" onClick={() => handleNavigate('setup')} className="mt-10">
+                Open Setup
               </Button>
             </div>
           </div>
@@ -226,11 +226,11 @@ function AppShell() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background font-black text-sm">S</div>
               <span className="text-sm font-bold tracking-tight">StudySpark</span>
             </div>
-            <p className="text-xs text-muted">(c) 2024 StudySpark. Built for students.</p>
+            <p className="text-xs text-muted">StudySpark demo workspace. Built for students.</p>
             <div className="flex gap-6 text-xs font-bold uppercase tracking-widest text-muted">
-              <a href="#" className="hover:text-foreground">Twitter</a>
-              <a href="#" className="hover:text-foreground">Discord</a>
-              <a href="#" className="hover:text-foreground">Privacy</a>
+              <button type="button" onClick={() => handleNavigate('dashboard')} className="hover:text-foreground">Dashboard</button>
+              <button type="button" onClick={() => handleNavigate('capsules')} className="hover:text-foreground">Capsules</button>
+              <button type="button" onClick={() => handleNavigate('setup')} className="hover:text-foreground">Setup</button>
             </div>
           </div>
         </footer>

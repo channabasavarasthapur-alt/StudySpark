@@ -53,10 +53,13 @@ export interface StudyContextValue {
   metrics: StudyMetrics
   elapsedSeconds: number
   startSession: (session: StartSessionInput) => void
+  seedDemoSessions: (sessions: StudySession[]) => void
+  resetStudySessions: () => void
   removeCapsuleStudyState: (capsule: CapsuleStudyStateInput) => void
   pauseSession: () => void
   resumeSession: () => void
   endSession: () => void
+  deleteSession: (sessionId: string) => void
 }
 
 export const StudyContext = createContext<StudyContextValue | undefined>(undefined)

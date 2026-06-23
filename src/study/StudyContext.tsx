@@ -7,6 +7,7 @@ import {
   type StudyMetrics,
   type StudySession,
 } from './studyContext'
+import { getLocalDateKey } from './setupPreferences'
 
 const SESSIONS_STORAGE_KEY = 'studyspark-study-sessions'
 const ACTIVE_SESSION_STORAGE_KEY = 'studyspark-active-session'
@@ -89,7 +90,7 @@ function loadActiveSession(): ActiveStudySession | null {
 }
 
 function getDateKey(date: Date) {
-  return date.toISOString().slice(0, 10)
+  return getLocalDateKey(date)
 }
 
 function calculateElapsedMs(session: ActiveStudySession | null, now: number) {
@@ -202,6 +203,16 @@ export function StudyProvider({ children }: { children: ReactNode }) {
         })
         setNow(Date.now())
       },
+      seedDemoSessions: (demoSessions: StudySession[]) => {
+        setActiveSession(null)
+        setSessions(demoSessions)
+        setNow(Date.now())
+      },
+      resetStudySessions: () => {
+        setActiveSession(null)
+        setSessions([])
+        setNow(Date.now())
+      },
       removeCapsuleStudyState: ({ capsuleId, title }) => {
         setActiveSession((currentSession) => {
           if (
@@ -282,6 +293,9 @@ export function StudyProvider({ children }: { children: ReactNode }) {
           return null
         })
         setNow(Date.now())
+      },
+      deleteSession: (sessionId: string) => {
+        setSessions((currentSessions) => currentSessions.filter((session) => session.id !== sessionId))
       },
     }),
     [activeSession, elapsedSeconds, metrics, sessions],
