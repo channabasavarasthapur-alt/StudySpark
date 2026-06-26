@@ -30,11 +30,11 @@ export function CapsuleCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors duration-200 hover:border-purple/20 sm:p-8">
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-colors duration-200 hover:border-purple/20 sm:p-6">
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="grid size-12 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
+            <div className="grid size-12 place-items-center rounded-lg border border-purple/15 bg-purple/5 text-purple">
               <Icon size={24} />
             </div>
             <div>
@@ -85,7 +85,7 @@ export function CapsuleCard({
             )}
           </div>
 
-          <section className="rounded-2xl border border-purple/10 bg-purple/5 p-6">
+          <section className="rounded-xl border border-purple/10 bg-purple/5 p-5">
             <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Quick revision points</h4>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {revisionPoints.map((point, index) => (

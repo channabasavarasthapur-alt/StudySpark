@@ -4,7 +4,7 @@ import { BentoCard } from '../components/ui/BentoCard'
 import { Button } from '../components/ui/Button'
 import { ReadinessBar } from '../components/ui/ReadinessBar'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { Zap, Plus, Trophy, Clock, BookOpen, CheckCircle2, CalendarClock, Trash2, Pause, Play, Square } from 'lucide-react'
+import { Zap, Plus, Trophy, BookOpen, CheckCircle2, CalendarClock, Trash2, Pause, Play, Square } from 'lucide-react'
 import { useStudy, type StudySessionSource } from '../study/studyContext'
 import { getLocalDateKey, getWeekdayId, parseSetupSubjects, useSetupPreferences } from '../study/setupPreferences'
 
@@ -197,6 +197,10 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
     : incompleteTask
       ? `${incompleteTask.durationMinutes} minutes planned for ${incompleteTask.subject}. ${formatDaysRemaining(daysRemaining)}.`
       : 'All generated study tasks for today are complete.'
+  const completedTodayCount = todayTasks.filter((task) => completedTaskIds.has(task.id)).length
+  const todayCompletionPercentage = todayTasks.length > 0 ? Math.round((completedTodayCount / todayTasks.length) * 100) : 0
+  const primaryActionView = activeSession ? activeSessionView : hasSetupCompleted ? 'capsules' : 'setup'
+  const primaryActionLabel = activeSession ? 'Open Session Context' : hasSetupCompleted ? 'Start Next Study Block' : 'Complete Setup'
 
   const completeTask = (task: StudyPlanTask) => {
     setCompletedTasks((currentTasks) => {
@@ -227,56 +231,62 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       <header className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:pt-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">StudySpark dashboard</p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-              Today&apos;s study plan
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple">StudySpark dashboard</p>
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              What should I do right now?
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-              A focused view of what to study now, how you are progressing, and what to do next.
+              Start with the next useful action. Progress, readiness, and history stay close by without competing for attention.
             </p>
           </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="mx-auto mt-8 max-w-7xl space-y-10 px-4 sm:px-6">
-        <section role="region" aria-labelledby="dashboard-overview-heading" className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Overview</p>
-            <h2 id="dashboard-overview-heading" className="mt-2 text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
-              Dashboard overview
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <BentoCard
-            className="border-purple/20"
-            title={activeSession ? 'Continue active session' : 'Next best action'}
-            description="The most useful next step is placed first so study starts with less decision fatigue."
-            badge={activeSession ? activeSession.status : 'Recommended'}
-          >
-            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-end">
+      <main className="mx-auto mt-8 max-w-7xl space-y-8 px-4 sm:px-6">
+        <section role="region" aria-labelledby="dashboard-action-heading" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <BentoCard className="border-purple/25 p-5 sm:p-7" badge={activeSession ? activeSession.status : 'Recommended'}>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-end">
               <div className="min-w-0">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted">
-                  <Clock size={14} className="text-purple" />
-                  {activeSession ? `${activeSource} - ${formatElapsed(elapsedSeconds)}` : 'Ready when you are'}
+                <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-purple/15 bg-purple/5 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-purple">
+                  <Zap size={15} fill="currentColor" />
+                  {activeSession ? `${activeSource} in progress` : 'Next best action'}
                 </div>
-                <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+                <h2 id="dashboard-action-heading" className="max-w-3xl text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
                   {hasSetupCompleted || activeSession ? nextActionTitle : 'Complete your study setup'}
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
                   {hasSetupCompleted || activeSession
                     ? nextActionDescription
-                    : 'Add subjects, an exam date, and a daily study target to generate your dashboard tasks.'}
+                    : 'Add your subjects, exam date, and daily target. StudySpark will turn that into a practical plan for today.'}
                 </p>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg border border-border bg-background/70 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Today</p>
+                    <p className="mt-2 text-2xl font-black tabular-nums text-foreground">
+                      {hasSetupCompleted ? `${completedTodayCount}/${todayTasks.length}` : '--'}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">blocks done</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/70 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Exam</p>
+                    <p className="mt-2 text-lg font-extrabold text-foreground">{formatDaysRemaining(daysRemaining)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/70 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Session</p>
+                    <p className="mt-2 text-2xl font-black tabular-nums text-foreground">
+                      {activeSession ? formatElapsed(elapsedSeconds) : `${dailyStudyMinutes}m`}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">{activeSession ? activeSession.status : 'daily target'}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-                <Button
-                  size="lg"
-                  className="gap-2"
-                  onClick={() => onNavigate(activeSession ? activeSessionView : hasSetupCompleted ? 'capsules' : 'setup')}
-                >
+
+              <div className="flex flex-col gap-3">
+                <Button size="lg" className="gap-2" onClick={() => onNavigate(primaryActionView)}>
                   <Zap size={18} fill="currentColor" />
-                  {activeSession ? 'Open Session Context' : hasSetupCompleted ? 'Start Studying' : 'Open Setup'}
+                  {primaryActionLabel}
                 </Button>
                 {activeSession && (
                   <div className="grid grid-cols-2 gap-3">
@@ -305,121 +315,153 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             </div>
           </BentoCard>
 
-          <BentoCard
-            className="border-purple/10"
-            title="Progress summary"
-            description="Completed sessions are the source of truth for dashboard progress."
-          >
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">Progress</p>
+                <h2 className="mt-2 text-xl font-extrabold text-foreground">Quiet signals</h2>
+              </div>
+              <Trophy size={22} className="text-purple" />
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                { label: 'Minutes studied', value: metrics.totalStudyMinutes, helper: 'total focus time' },
-                { label: 'Sessions', value: metrics.completedSessions, helper: 'completed' },
-                { label: 'Streak', value: `${metrics.currentStreak}d`, helper: 'current run' },
-                { label: 'Readiness', value: `${metrics.readinessPercentage}%`, helper: 'coverage estimate' },
+                { label: 'Minutes', value: metrics.totalStudyMinutes },
+                { label: 'Sessions', value: metrics.completedSessions },
+                { label: 'Streak', value: `${metrics.currentStreak}d` },
+                { label: 'Ready', value: `${metrics.readinessPercentage}%` },
               ].map((metric) => (
-                <div
-                  key={metric.label}
-                  className="rounded-xl border border-border bg-background/70 p-4 text-left transition-colors duration-200"
-                >
-                  <p className="text-2xl font-extrabold tabular-nums text-foreground">{metric.value}</p>
-                  <p className="mt-1 text-sm font-medium text-muted">{metric.label}</p>
-                  <p className="mt-2 text-xs leading-5 text-muted">{metric.helper}</p>
+                <div key={metric.label} className="rounded-lg border border-border bg-background/70 p-3">
+                  <p className="text-xl font-black tabular-nums text-foreground">{metric.value}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">{metric.label}</p>
                 </div>
               ))}
             </div>
-          </BentoCard>
-          </div>
+            <div className="mt-5">
+              <ReadinessBar percentage={metrics.readinessPercentage} showTooltip={false} />
+              <p className="mt-3 text-sm leading-6 text-muted">Readiness rises as planned study gets completed.</p>
+            </div>
+          </aside>
         </section>
 
-        <section role="region" aria-labelledby="dashboard-study-heading" className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Focus flow</p>
-            <h2 id="dashboard-study-heading" className="mt-2 text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
-              Study plan, readiness, and recent activity
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section role="region" aria-labelledby="dashboard-plan-heading" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+          <h2 id="dashboard-plan-heading" className="sr-only">
+            Study plan, readiness, and recent activity
+          </h2>
           <BentoCard
             className="border-purple/10"
-            title="Today&apos;s study plan"
-            description={`${formatDaysRemaining(daysRemaining)}. Daily study time is divided across your setup subjects.`}
-            icon={<Trophy size={20} className="text-purple" />}
+            title="Today's study plan"
+            description={`${formatDaysRemaining(daysRemaining)}. Finish one block at a time.`}
+            icon={<BookOpen size={20} className="text-purple" />}
           >
-            <div className="mt-6 h-[360px] space-y-3 overflow-y-auto pr-1">
-              {!hasSetupCompleted ? (
-                <div className="flex min-h-full items-center justify-center rounded-2xl border border-dashed border-border bg-background/60 p-6 text-center">
-                  <div>
-                    <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-card text-muted">
-                      <CalendarClock size={24} />
-                    </div>
-                    <h3 className="mt-4 text-lg font-extrabold text-foreground">No setup completed</h3>
-                    <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">
-                      Add your subjects, exam date, and daily study target to generate today&apos;s plan.
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={() => onNavigate('setup')}>
-                      Complete Setup
-                    </Button>
+            <div className="mt-6">
+              {hasSetupCompleted && todayTasks.length > 0 && (
+                <div className="mb-5 rounded-lg border border-border bg-background/70 p-4">
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-muted">Today&apos;s plan</span>
+                    <span className="font-extrabold text-foreground">{todayCompletionPercentage}%</span>
                   </div>
-                </div>
-              ) : todayTasks.length > 0 ? (
-                todayTasks.map((task) => {
-                  const isComplete = completedTaskIds.has(task.id)
-
-                  return (
-                    <div
-                      key={task.id}
-                      className={`group flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-border bg-background/70 p-4 transition-colors duration-200 sm:flex-row sm:items-center ${
-                        isComplete ? 'opacity-75' : 'hover:border-purple/35 hover:bg-purple/5'
-                      }`}
-                    >
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div
-                          className={`grid size-11 shrink-0 place-items-center rounded-xl border ${
-                            isComplete ? 'border-teal/20 bg-teal/10 text-teal' : 'border-purple/15 bg-purple/5 text-purple'
-                          }`}
-                        >
-                          {isComplete ? <CheckCircle2 size={18} /> : <span className="text-xs font-bold">GO</span>}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate font-semibold text-foreground">{task.title}</h3>
-                          <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted">
-                            {task.subject} - {task.durationMinutes}m
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant={isComplete ? 'ghost' : 'outline'}
-                        size="sm"
-                        className="shrink-0 self-start gap-2 sm:self-auto"
-                        onClick={() => completeTask(task)}
-                        disabled={isComplete}
-                      >
-                        {isComplete ? 'Completed' : 'Complete'}
-                        <CheckCircle2 size={14} />
-                      </Button>
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="flex min-h-full items-center justify-center rounded-2xl border border-dashed border-border bg-background/60 p-6 text-center">
-                  <div>
-                    <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-card text-muted">
-                      <Trophy size={24} />
-                    </div>
-                    <h3 className="mt-4 text-lg font-extrabold text-foreground">
-                      {todayIsAvailable ? 'No tasks available' : 'No study blocks scheduled today'}
-                    </h3>
-                    <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">
-                      {todayIsAvailable
-                        ? 'Your setup is valid, but there are no study blocks for today. Adjust your subjects or daily target to create tasks.'
-                        : 'Today is marked unavailable in setup, so StudySpark is leaving the daily plan clear.'}
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={() => onNavigate('setup')}>
-                      Adjust Setup
-                    </Button>
+                  <div className="h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
+                    <div className="h-full rounded-full bg-purple progress-transition" style={{ width: `${todayCompletionPercentage}%` }} />
                   </div>
                 </div>
               )}
+
+              <div className="space-y-3">
+                {!hasSetupCompleted ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-background/60 p-6">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex gap-4">
+                        <div className="grid size-12 shrink-0 place-items-center rounded-xl border border-border bg-card text-purple">
+                          <CalendarClock size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-extrabold text-foreground">Set up your first plan</h3>
+                          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+                            Tell StudySpark your subjects, exam date, and available time so this space becomes a real study queue.
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="shrink-0" onClick={() => onNavigate('setup')}>
+                        Complete Setup
+                      </Button>
+                    </div>
+                  </div>
+                ) : todayTasks.length > 0 ? (
+                  todayTasks.map((task) => {
+                    const isComplete = completedTaskIds.has(task.id)
+                    const isNext = task.id === incompleteTask?.id
+
+                    return (
+                      <div
+                        key={task.id}
+                        className={`flex flex-col items-stretch justify-between gap-4 rounded-2xl border p-4 transition-colors duration-200 sm:flex-row sm:items-center ${
+                          isNext
+                            ? 'border-purple/35 bg-purple/5'
+                            : isComplete
+                              ? 'border-border bg-background/60 opacity-75'
+                              : 'border-border bg-background/70 hover:border-purple/25'
+                        }`}
+                      >
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div
+                            className={`grid size-11 shrink-0 place-items-center rounded-xl border ${
+                              isComplete ? 'border-teal/20 bg-teal/10 text-teal' : 'border-purple/15 bg-purple/5 text-purple'
+                            }`}
+                          >
+                            {isComplete ? <CheckCircle2 size={18} /> : isNext ? <Zap size={17} fill="currentColor" /> : <BookOpen size={17} />}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-semibold text-foreground">{task.title}</h3>
+                              {isNext && (
+                                <span className="rounded-full bg-purple px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-foreground">
+                                  Next
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                              {task.subject} - {task.durationMinutes}m
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant={isComplete ? 'ghost' : 'outline'}
+                          size="sm"
+                          className="shrink-0 self-start gap-2 sm:self-auto"
+                          onClick={() => completeTask(task)}
+                          disabled={isComplete}
+                        >
+                          {isComplete ? 'Completed' : 'Mark Done'}
+                          <CheckCircle2 size={14} />
+                        </Button>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border bg-background/60 p-6">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex gap-4">
+                        <div className="grid size-12 shrink-0 place-items-center rounded-xl border border-border bg-card text-teal">
+                          <Trophy size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-extrabold text-foreground">
+                            {todayIsAvailable ? 'Your plan needs a small adjustment' : 'Today is a rest day'}
+                          </h3>
+                          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+                            {todayIsAvailable
+                              ? 'Your setup is valid, but no blocks were generated for today. Adjust subjects or daily minutes to create tasks.'
+                              : 'No study blocks are scheduled today. You can keep the plan clear or adjust availability in setup.'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="shrink-0" onClick={() => onNavigate('setup')}>
+                        Adjust Setup
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </BentoCard>
 
@@ -427,7 +469,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             <BentoCard
               className="border-purple/10"
               title="Weekly progress"
-              description="Study plan completion from local dashboard tasks."
+              description="A quick check after you know what to do next."
               icon={<CalendarClock size={20} className="text-purple" />}
             >
               <div className="mt-6 space-y-4">
@@ -437,20 +479,17 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                     <span className="font-extrabold text-foreground">{weeklyCompletionPercentage}%</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
-                    <div
-                      className="h-full rounded-full bg-purple progress-transition"
-                      style={{ width: `${weeklyCompletionPercentage}%` }}
-                    />
+                    <div className="h-full rounded-full bg-purple progress-transition" style={{ width: `${weeklyCompletionPercentage}%` }} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-border bg-background/70 p-4">
-                    <p className="text-2xl font-extrabold tabular-nums text-foreground">{totalPlannedMinutesThisWeek}</p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Planned minutes</p>
-                  </div>
-                  <div className="rounded-xl border border-border bg-background/70 p-4">
+                  <div className="rounded-lg border border-border bg-background/70 p-4">
                     <p className="text-2xl font-extrabold tabular-nums text-foreground">{completedMinutesThisWeek}</p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Completed minutes</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Done</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/70 p-4">
+                    <p className="text-2xl font-extrabold tabular-nums text-foreground">{totalPlannedMinutesThisWeek}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Planned</p>
                   </div>
                 </div>
               </div>
@@ -459,29 +498,24 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             <BentoCard
               className="border-purple/10"
               title="Readiness explained"
-              description="A transparent progress signal for students, teachers, and parents."
+              description="A guide for reflection, not a grade."
               icon={<BookOpen size={20} className="text-purple" />}
             >
               <div className="mt-6 space-y-4">
                 <ReadinessBar percentage={metrics.readinessPercentage} />
                 <p className="text-sm leading-6 text-muted">
-                  Readiness increases when planned study time is completed. It is a guide for reflection, not a grade.
+                  Keep completing focused sessions, reviewing capsules, and building a consistent study history.
                 </p>
-                <ul className="space-y-2 text-sm leading-6 text-muted">
-                  <li>Complete focused sessions.</li>
-                  <li>Review recent capsules.</li>
-                  <li>Keep study history consistent.</li>
-                </ul>
               </div>
             </BentoCard>
 
-            <BentoCard className="border-purple/10" title="Recent activity" description="Your latest completed sessions.">
+            <BentoCard className="border-purple/10" title="Recent activity" description="Completed sessions stay available here.">
               {hasActivity ? (
                 <div className="mt-5 space-y-3">
                   {metrics.recentActivity.slice(0, 3).map((session) => (
                     <div
                       key={session.id}
-                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-transparent p-3 transition-colors duration-200 hover:border-purple/30 hover:bg-purple/5"
+                      className="flex w-full flex-col gap-3 rounded-xl border border-transparent p-3 transition-colors duration-200 hover:border-purple/30 hover:bg-purple/5 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">{session.title}</p>
@@ -491,12 +525,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                         <span className="rounded-full bg-purple/10 px-2.5 py-1 text-xs font-semibold text-purple">
                           {session.durationMinutes}m
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteSession(session.id)}
-                          className="gap-2 text-muted"
-                        >
+                        <Button variant="danger" size="sm" onClick={() => deleteSession(session.id)} className="gap-2">
                           <Trash2 size={14} />
                           Delete
                         </Button>
@@ -505,15 +534,17 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/60 p-5 text-sm leading-6 text-muted">
-                  Complete your first capsule session to build a reliable study history.
+                <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/60 p-5">
+                  <h3 className="text-sm font-extrabold text-foreground">Build your first study history entry</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    Start a capsule session when you are ready. Completed sessions will appear here for review.
+                  </p>
                   <Button variant="ghost" size="sm" className="mt-3 px-0 text-purple" onClick={() => onNavigate('capsules')}>
                     Create a capsule
                   </Button>
                 </div>
               )}
             </BentoCard>
-          </div>
           </div>
         </section>
       </main>

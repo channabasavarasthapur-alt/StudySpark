@@ -18,13 +18,13 @@ export function BentoCard({
   badge,
 }: BentoCardProps) {
   return (
-    <div className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-6 bento-shadow transition-colors duration-200 hover:border-purple/20 ${className}`}>
+    <div className={`group relative overflow-hidden rounded-xl border border-border bg-card p-5 bento-shadow transition-colors duration-200 hover:border-purple/20 sm:p-6 ${className}`}>
       <div className="relative flex h-full flex-col">
         {(icon || badge || title) && (
           <div className="mb-4">
             <div className="flex items-center justify-between gap-4">
               {icon && (
-                <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-background text-purple">
+                <div className="flex size-10 items-center justify-center rounded-lg border border-border bg-background text-purple">
                   {icon}
                 </div>
               )}
@@ -34,7 +34,7 @@ export function BentoCard({
                 </span>
               )}
             </div>
-            {title && <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>}
+            {title && <h3 className="mt-4 text-lg font-extrabold tracking-tight text-foreground">{title}</h3>}
             {description && <p className="mt-1 text-sm leading-6 text-muted">{description}</p>}
           </div>
         )}

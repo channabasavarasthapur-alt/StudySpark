@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ArrowLeft, BookOpen, CalendarClock, CheckCircle2, Clock, Flame, Pause, Play, Square, Target, Trophy } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, BookOpen, CalendarClock, Pause, Play, Square, Target, Trophy } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { ReadinessBar } from '../components/ui/ReadinessBar'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -202,6 +202,15 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
     ...getSubjectReadiness(subject, sessions, completedTasks, dailyStudyMinutes, subjects.length),
   }))
   const recommendedSubject = getRecommendedSubject(subjectReadiness, activeSession?.title)
+  const averageSubjectReadiness =
+    subjectReadiness.length > 0
+      ? Math.round(subjectReadiness.reduce((total, subject) => total + subject.readiness, 0) / subjectReadiness.length)
+      : metrics.readinessPercentage
+  const examConfidence = Math.round((averageSubjectReadiness + metrics.readinessPercentage + weeklyCompletionPercentage) / 3)
+  const confidenceLabel = examConfidence >= 75 ? 'Strong' : examConfidence >= 45 ? 'Building' : 'Needs focus'
+  const revisionPriorities = [...subjectReadiness]
+    .sort((first, second) => first.readiness - second.readiness || first.studiedMinutes - second.studiedMinutes)
+    .slice(0, 3)
 
   const handleStartRecommendedSubject = () => {
     if (activeSession) {
@@ -235,64 +244,110 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
           <ThemeToggle />
         </div>
 
-        <div className="mt-10 max-w-3xl">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted">Exams</p>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Exam readiness at a glance.
-          </h1>
-          <p className="mt-5 text-base leading-7 text-muted sm:text-lg">
-            Use completed study sessions to see readiness, countdown pressure, and the next useful task.
-          </p>
+        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-purple">Exams</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+              Know what needs revision before exam day.
+            </h1>
+            <p className="mt-5 text-base leading-7 text-muted sm:text-lg">
+              StudySpark turns your study history into countdown pressure, subject readiness, revision priorities, and confidence.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Exam confidence</p>
+            <div className="mt-3 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-5xl font-black tracking-tight text-foreground">{examConfidence}%</p>
+                <p className="mt-1 text-sm font-semibold text-muted">{confidenceLabel}</p>
+              </div>
+              <Trophy size={32} className="mb-2 text-purple" />
+            </div>
+            <div className="mt-5 h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
+              <div className="h-full rounded-full bg-purple progress-transition" style={{ width: `${examConfidence}%` }} />
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto mt-10 max-w-7xl space-y-6 px-4 sm:px-6">
         {!hasExamConfigured && (
-          <section className="rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center shadow-sm">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-border bg-background text-muted">
-              <CalendarClock size={28} />
+          <section className="rounded-2xl border border-dashed border-border bg-card/70 p-8 shadow-sm">
+            <div className="grid gap-5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+              <div className="grid size-14 place-items-center rounded-2xl border border-border bg-background text-muted">
+                <CalendarClock size={28} />
+              </div>
+              <div>
+                <h2 className="text-xl font-extrabold text-foreground">Set an exam date to unlock the story</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                  Add an exam date and subjects in setup to calculate days remaining, readiness, priorities, and recommendations.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => onNavigate('setup')}>
+                Configure Exam
+              </Button>
             </div>
-            <h2 className="mt-5 text-xl font-extrabold text-foreground">No exam configured</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-              Add an exam date and subjects in setup to unlock countdowns, subject readiness, and exam recommendations.
-            </p>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-4">
-              Configure Exam
-            </Button>
           </section>
         )}
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-            <div className="flex items-start gap-3">
-              <div className="grid size-11 shrink-0 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
-                <Target size={20} />
+        <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+          <div
+            className={`rounded-2xl border bg-card p-6 shadow-sm ${
+              countdown.urgency === 'high' ? 'border-teal/25' : 'border-border'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Days remaining</p>
+                <h2 className="mt-4 text-6xl font-black tracking-tight text-foreground sm:text-7xl">{countdown.label}</h2>
+                <p className="mt-4 text-base leading-7 text-muted">{countdown.helper}</p>
               </div>
+              <div
+                className={`grid size-12 shrink-0 place-items-center rounded-xl border ${
+                  countdown.urgency === 'high' ? 'border-teal/25 bg-teal/10 text-teal' : 'border-purple/15 bg-purple/5 text-purple'
+                }`}
+              >
+                <CalendarClock size={28} />
+              </div>
+            </div>
+            <div className="mt-8 rounded-xl border border-border bg-background/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Exam date</p>
+              <p className="mt-2 text-lg font-extrabold text-foreground">{formatExamDate(setupPreferences.examDate)}</p>
+            </div>
+            {!setupPreferences.examDate && (
+              <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-5">
+                Set Exam Date
+              </Button>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Recommended next subject</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{recommendedSubject.subject}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted">{recommendedSubject.description}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Recommended subject</p>
+                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-foreground">{recommendedSubject.subject}</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{recommendedSubject.description}</p>
+              </div>
+              <div className="shrink-0 rounded-2xl border border-border bg-background/70 p-4 xl:w-48">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Revision block</p>
+                <p className="mt-2 text-2xl font-black text-foreground">{recommendedSubject.minutes}</p>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-border bg-background/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl border border-border bg-card text-purple">
-                  <Clock size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted">Suggested block</p>
-                  <p className="text-lg font-extrabold text-foreground">{recommendedSubject.minutes}</p>
-                </div>
-              </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button onClick={handleStartRecommendedSubject} disabled={Boolean(activeSession)} className="gap-2">
                 <BookOpen size={16} />
-                {hasExamConfigured ? 'Start Review' : 'Configure Exam'}
+                {hasExamConfigured ? 'Start Recommended Review' : 'Configure Exam'}
+              </Button>
+              <Button variant="outline" onClick={() => onNavigate('setup')} className="gap-2">
+                <Target size={16} />
+                Adjust Exam Plan
               </Button>
             </div>
 
             {activeSession && (
-              <div className="mt-4 rounded-2xl border border-purple/20 bg-purple/5 p-4">
+              <div className="mt-5 rounded-2xl border border-purple/20 bg-purple/5 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted">Active session</p>
@@ -301,7 +356,7 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
                       {activeElapsedDisplay} studied - {activeSession.status}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 sm:w-auto">
+                  <div className="grid grid-cols-2 gap-2">
                     {activeSession.status === 'running' ? (
                       <Button variant="outline" size="sm" onClick={pauseSession} className="gap-2">
                         <Pause size={14} />
@@ -322,134 +377,142 @@ export default function ExamsPage({ onNavigate }: ExamsPageProps) {
               </div>
             )}
           </div>
-
-          <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-            <div className="flex items-center gap-3">
-              <div
-                className={`grid size-11 place-items-center rounded-xl border ${
-                  countdown.urgency === 'high' ? 'border-teal/25 bg-teal/10 text-teal' : 'border-purple/15 bg-purple/5 text-purple'
-                }`}
-              >
-                <CalendarClock size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Exam countdown</p>
-                <h2 className="text-3xl font-extrabold tracking-tight text-foreground">{countdown.label}</h2>
-              </div>
-            </div>
-            <div className="mt-5 rounded-xl border border-border bg-background/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Exam date</p>
-              <p className="mt-2 text-lg font-extrabold text-foreground">{formatExamDate(setupPreferences.examDate)}</p>
-            </div>
-            <p className="mt-5 text-sm leading-6 text-muted">{countdown.helper}</p>
-            {!setupPreferences.examDate && (
-              <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-5">
-                Set Exam Date
-              </Button>
-            )}
-          </aside>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-            <div className="mb-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Subject readiness</p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Subjects</h2>
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Subject readiness</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Readiness map</h2>
+              </div>
+              <p className="text-sm font-semibold text-muted">{averageSubjectReadiness}% average</p>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {subjectReadiness.map((subject) => (
-                <article key={subject.subject} className="rounded-2xl border border-border bg-background/70 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-lg font-extrabold text-foreground">{subject.subject}</h3>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                        {subject.sessions} session{subject.sessions === 1 ? '' : 's'} - {subject.completedTasks} task{subject.completedTasks === 1 ? '' : 's'}
-                      </p>
+
+            {subjectReadiness.length > 0 ? (
+              <div className="space-y-3">
+                {subjectReadiness.map((subject) => (
+                  <article key={subject.subject} className="rounded-2xl border border-border bg-background/70 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-lg font-extrabold text-foreground">{subject.subject}</h3>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                          {subject.studiedMinutes}m studied - {subject.sessions + subject.completedTasks} signal
+                          {subject.sessions + subject.completedTasks === 1 ? '' : 's'}
+                        </p>
+                      </div>
+                      <span className="text-2xl font-black text-foreground">{subject.readiness}%</span>
                     </div>
-                    <span className="text-xl font-extrabold text-foreground">{subject.readiness}%</span>
-                  </div>
-                  <ReadinessBar percentage={subject.readiness} label={`${subject.subject} readiness`} showTooltip={false} />
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-border bg-card p-3">
-                      <p className="text-lg font-extrabold text-foreground">{subject.studiedMinutes}m</p>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Completed</p>
-                    </div>
-                    <div className="rounded-xl border border-border bg-card p-3">
-                      <p className="text-lg font-extrabold text-foreground">{subject.readiness}%</p>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Ready</p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                    <ReadinessBar percentage={subject.readiness} label={`${subject.subject} readiness`} showTooltip={false} />
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border bg-background/60 p-6">
+                <h3 className="text-lg font-extrabold text-foreground">Add subjects to see readiness</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">StudySpark needs your exam subjects before it can compare readiness.</p>
+                <Button variant="outline" size="sm" onClick={() => onNavigate('setup')} className="mt-4">
+                  Add Subjects
+                </Button>
+              </div>
+            )}
           </div>
 
           <aside className="space-y-4">
             <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Progress summary</p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{metrics.readinessPercentage}% ready</h2>
-              <div className="mt-5">
-                <ReadinessBar percentage={metrics.readinessPercentage} />
-              </div>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Minutes', value: metrics.totalStudyMinutes, icon: Clock },
-                  { label: 'Sessions', value: metrics.completedSessions, icon: CheckCircle2 },
-                  { label: 'Streak', value: `${metrics.currentStreak}d`, icon: Flame },
-                  { label: 'To review', value: metrics.toReview, icon: Trophy },
-                ].map((item) => {
-                  const Icon = item.icon
-
-                  return (
-                    <div key={item.label} className="rounded-xl border border-border bg-background/70 p-4">
-                      <Icon size={16} className="text-purple" />
-                      <p className="mt-3 text-2xl font-extrabold text-foreground">{item.value}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted">{item.label}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Weekly progress</p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{weeklyCompletionPercentage}% complete</h2>
-              <div className="mt-5 h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
-                <div
-                  className="h-full rounded-full bg-purple progress-transition"
-                  style={{ width: `${weeklyCompletionPercentage}%` }}
-                />
-              </div>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-border bg-background/70 p-4">
-                  <p className="text-2xl font-extrabold tabular-nums text-foreground">{totalPlannedMinutesThisWeek}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Planned minutes</p>
-                </div>
-                <div className="rounded-xl border border-border bg-background/70 p-4">
-                  <p className="text-2xl font-extrabold tabular-nums text-foreground">{completedMinutesThisWeek}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">Completed minutes</p>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Recent exam signal</p>
-              {metrics.recentActivity.length > 0 ? (
-                <div className="mt-4 space-y-3">
-                  {metrics.recentActivity.slice(0, 3).map((session) => (
-                    <div key={session.id} className="rounded-xl border border-border bg-background/70 p-3">
-                      <p className="truncate text-sm font-semibold text-foreground">{session.title}</p>
-                      <p className="mt-1 text-xs text-muted">
-                        {session.durationMinutes}m studied of {session.plannedMinutes}m planned
-                      </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Revision priorities</p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Weakest first</h2>
+              {revisionPriorities.length > 0 ? (
+                <div className="mt-5 space-y-3">
+                  {revisionPriorities.map((subject, index) => (
+                    <div key={subject.subject} className="rounded-xl border border-border bg-background/70 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-purple text-xs font-black text-purple-foreground">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-extrabold text-foreground">{subject.subject}</p>
+                            <p className="text-xs text-muted">{subject.studiedMinutes}m studied</p>
+                          </div>
+                        </div>
+                        <span className="font-black text-foreground">{subject.readiness}%</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="mt-4 text-sm leading-6 text-muted">Complete a study session to build exam signals.</p>
+                <p className="mt-5 text-sm leading-6 text-muted">Add subjects to generate revision priorities.</p>
               )}
             </section>
+
+            <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Exam confidence</p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{confidenceLabel}</h2>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Confidence blends subject readiness, overall study readiness, and this week&apos;s completion.
+              </p>
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Subjects', value: `${averageSubjectReadiness}%` },
+                  { label: 'Study', value: `${metrics.readinessPercentage}%` },
+                  { label: 'Week', value: `${weeklyCompletionPercentage}%` },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-border bg-background/70 p-3">
+                    <p className="text-lg font-black text-foreground">{item.value}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {countdown.urgency === 'high' && (
+              <section className="rounded-2xl border border-teal/25 bg-teal/10 p-5 text-teal shadow-sm">
+                <div className="flex gap-3">
+                  <AlertTriangle size={20} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-extrabold">Final stretch</p>
+                    <p className="mt-1 text-sm leading-6">Keep sessions short and target the lowest-readiness subjects first.</p>
+                  </div>
+                </div>
+              </section>
+            )}
           </aside>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Weekly study signal</p>
+            <div className="mt-3 flex items-end justify-between gap-4">
+              <h2 className="text-2xl font-extrabold tracking-tight text-foreground">{weeklyCompletionPercentage}% complete</h2>
+              <p className="text-sm font-semibold text-muted">
+                {completedMinutesThisWeek}/{totalPlannedMinutesThisWeek}m
+              </p>
+            </div>
+            <div className="mt-5 h-2 w-full overflow-hidden rounded-full border border-purple/15 bg-muted/10">
+              <div className="h-full rounded-full bg-purple progress-transition" style={{ width: `${weeklyCompletionPercentage}%` }} />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Recent exam signal</p>
+            {metrics.recentActivity.length > 0 ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {metrics.recentActivity.slice(0, 3).map((session) => (
+                  <div key={session.id} className="rounded-xl border border-border bg-background/70 p-3">
+                    <p className="truncate text-sm font-semibold text-foreground">{session.title}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {session.durationMinutes}m studied of {session.plannedMinutes}m planned
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl border border-dashed border-border bg-background/60 p-4">
+                <p className="text-sm leading-6 text-muted">Start the recommended review to create your first exam signal.</p>
+              </div>
+            )}
+          </div>
         </section>
       </main>
     </div>

@@ -24,9 +24,9 @@ export function SubjectCard({
   const lastStudiedLabel = lastStudied === 'Not yet' ? 'Ready for first session' : `Last studied ${lastStudied}`
 
   return (
-    <div className={`group relative rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors duration-200 ${hoverBorder}`}>
+    <div className={`group relative rounded-xl border border-border bg-card p-5 shadow-sm transition-colors duration-200 ${hoverBorder}`}>
       <div className="flex items-center justify-between">
-        <div className={`grid size-12 place-items-center rounded-xl border border-border ${bgColor} ${accentColor}`}>
+        <div className={`grid size-12 place-items-center rounded-lg border border-border ${bgColor} ${accentColor}`}>
           <Icon size={24} />
         </div>
         <div className="text-right">

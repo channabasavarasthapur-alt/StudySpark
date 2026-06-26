@@ -1,7 +1,8 @@
-import { LayoutDashboard, BookOpen, GraduationCap, Settings, Home, Clock } from 'lucide-react'
+import { LayoutDashboard, BookOpen, GraduationCap, Settings, Home, Clock, LogOut } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { View } from '../../types/navigation'
 import { useStudy, type StudySessionSource } from '../../study/studyContext'
+import { useAuth } from '../../auth/authContext'
 
 interface DockProps {
   activeView: View
@@ -37,6 +38,7 @@ function getSessionView(source: StudySessionSource): View {
 
 export function Dock({ activeView, onNavigate }: DockProps) {
   const { activeSession, elapsedSeconds } = useStudy()
+  const { signOut, user } = useAuth()
   const items: { id: View; icon: LucideIcon; label: string }[] = [
     { id: 'landing', icon: Home, label: 'Home' },
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -46,7 +48,7 @@ export function Dock({ activeView, onNavigate }: DockProps) {
   ]
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4 sm:bottom-6">
+    <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-3xl -translate-x-1/2 px-4 sm:bottom-6">
       {activeSession && (
         <button
           type="button"
@@ -64,39 +66,50 @@ export function Dock({ activeView, onNavigate }: DockProps) {
         </button>
       )}
 
-      <nav className="mx-auto flex items-center gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-2xl transition-colors duration-200">
-        {items.map((item) => {
-          const isActive = activeView === item.id
-          const Icon = item.icon
+      <div className="mx-auto flex w-full items-center justify-center gap-2">
+        <nav className="flex min-w-0 flex-1 items-center gap-1 rounded-xl border border-border bg-card p-1.5 shadow-lg transition-colors duration-200 sm:max-w-2xl">
+          {items.map((item) => {
+            const isActive = activeView === item.id
+            const Icon = item.icon
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onNavigate(item.id)}
-              aria-current={isActive ? 'page' : undefined}
-              aria-label={item.label}
-              className={`group relative flex h-12 flex-1 min-w-0 items-center justify-center rounded-xl transition-colors duration-200 ${
-                isActive
-                  ? 'bg-purple text-purple-foreground shadow-sm'
-                  : 'text-muted hover:bg-foreground/5 hover:text-foreground'
-              }`}
-              title={item.label}
-            >
-              <div className="flex flex-col items-center">
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`mt-0.5 hidden text-[9px] font-semibold tracking-tight sm:block ${isActive ? 'text-purple-foreground' : 'text-muted'}`}>
-                  {item.label}
-                </span>
-              </div>
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onNavigate(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
+                className={`group relative flex h-12 flex-1 min-w-0 items-center justify-center rounded-lg transition-colors duration-200 ${
+                  isActive
+                    ? 'bg-purple text-purple-foreground shadow-sm'
+                    : 'text-muted hover:bg-foreground/5 hover:text-foreground'
+                }`}
+                title={item.label}
+              >
+                <div className="flex flex-col items-center">
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`mt-0.5 hidden text-[9px] font-semibold tracking-tight sm:block ${isActive ? 'text-purple-foreground' : 'text-muted'}`}>
+                    {item.label}
+                  </span>
+                </div>
 
-              {isActive && (
-                <span className="absolute -bottom-1 size-1 rounded-full bg-purple-foreground sm:hidden" />
-              )}
-            </button>
-          )
-        })}
-      </nav>
+                {isActive && (
+                  <span className="absolute -bottom-1 size-1 rounded-full bg-purple-foreground sm:hidden" />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          aria-label={user?.email ? `Log out ${user.email}` : 'Log out'}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-red-500/20 bg-card text-red-500 shadow-lg transition-colors duration-200 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          title="Log out"
+        >
+          <LogOut size={18} />
+        </button>
+      </div>
     </div>
   )
 }
