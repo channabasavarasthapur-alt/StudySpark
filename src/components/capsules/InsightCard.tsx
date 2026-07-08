@@ -16,7 +16,7 @@ export function InsightCard({ label, value, icon: Icon, description, color, prog
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center gap-4">
         <div className={`grid size-12 place-items-center rounded-lg border ${colorClasses[color]}`}>
           <Icon size={24} />
@@ -36,7 +36,7 @@ export function InsightCard({ label, value, icon: Icon, description, color, prog
           </div>
         </div>
       )}
-      <p className="mt-4 text-sm text-muted leading-6">
+      <p className="mt-4 text-sm leading-6 text-muted">
         {description}
       </p>
     </div>

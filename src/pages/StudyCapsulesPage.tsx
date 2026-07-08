@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../components/ui/Button'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { CapsuleCard } from '../components/capsules/CapsuleCard'
 import { InsightCard } from '../components/capsules/InsightCard'
 import {
   Sparkles,
@@ -16,13 +15,15 @@ import {
   Atom,
   Save,
   CheckCircle2,
-  Plus,
-  type LucideIcon,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Play,
 } from 'lucide-react'
 import type { View } from '../types/navigation'
 import { capsuleInsights, loadingMessages } from '../mocks/capsuleData'
 import { generateCapsuleFromNotes, type GeneratedCapsuleContent } from '../study/capsuleGenerator'
-import { useStudy } from '../study/studyContext'
+import { useStudy, useStudyTimer } from '../study/studyContext'
 
 interface StudyCapsulesPageProps {
   onNavigate: (view: View) => void
@@ -38,7 +39,7 @@ interface StoredCapsule {
 }
 
 const storageKey = 'studyspark.capsuleLibrary'
-type CapsuleMode = 'create' | 'library' | 'study'
+type CapsuleMode = 'create' | 'review' | 'library' | 'study'
 
 function formatElapsed(seconds: number) {
   const minutes = Math.floor(seconds / 60)
@@ -221,9 +222,20 @@ function inferSubject(content: string) {
   return firstLine.split(/[,:;-]/)[0]?.trim().slice(0, 40) || 'General'
 }
 
+function generateUUID() {
+  if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined' && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = (Math.random() * 16) | 0
+    const value = char === 'x' ? random : (random & 0x3) | 0x8
+    return value.toString(16)
+  })
+}
+
 function createCapsule(content: string): StoredCapsule {
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     title: getGeneratedTitle(content),
     subject: inferSubject(content),
     createdAt: new Date().toISOString(),
@@ -240,7 +252,11 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [selectedCapsule, setSelectedCapsule] = useState<StoredCapsule | null>(null)
   const [capsules, setCapsules] = useState<StoredCapsule[]>(() => loadCapsules())
-  const { activeSession, elapsedSeconds, endSession, pauseSession, removeCapsuleStudyState, resumeSession, startSession } = useStudy()
+  const [focusIndex, setFocusIndex] = useState(0)
+  const [pendingCapsule, setPendingCapsule] = useState<StoredCapsule | null>(null)
+  const { activeSession, endSession, pauseSession, removeCapsuleStudyState, resumeSession, startSession } = useStudy()
+  const { elapsedSeconds } = useStudyTimer()
+  
   const isCapsuleSessionActive = activeSession?.source === 'capsule'
   const hasOtherActiveSession = Boolean(activeSession && !isCapsuleSessionActive)
   const elapsedDisplay = formatElapsed(elapsedSeconds)
@@ -248,10 +264,52 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   const selectedCapsuleSaved = Boolean(selectedCapsule && capsules.some((capsule) => capsule.id === selectedCapsule.id))
   const activeCapsule = selectedCapsule ?? capsules.find((capsule) => capsule.id === activeSession?.relatedCapsuleId) ?? null
   const canStartSelectedCapsule = Boolean(activeCapsule && capsules.some((capsule) => capsule.id === activeCapsule.id))
+  
+  const focusItems = activeCapsule
+    ? [
+        { label: 'Summary', body: activeCapsule.generated.summary },
+        ...activeCapsule.generated.quickRevisionPoints.slice(0, 3).map((point, index) => ({
+          label: `Revision ${index + 1}`,
+          body: point,
+        })),
+        ...activeCapsule.generated.practiceQuestions.map((question, index) => ({
+          label: `Question ${index + 1}`,
+          body: question,
+        })),
+      ]
+    : []
+  const currentFocusItem = focusItems[Math.min(focusIndex, Math.max(0, focusItems.length - 1))]
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(capsules))
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(capsules))
+    } catch (e) {
+      console.error('Failed to save capsules to localStorage:', e)
+    }
   }, [capsules])
+
+  useEffect(() => {
+    if (!isGenerating || !pendingCapsule) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setLoadingStep((prev) => (prev < loadingMessages.length - 1 ? prev + 1 : prev))
+    }, 600)
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+      setSelectedCapsule(pendingCapsule)
+      setIsGenerating(false)
+      setPendingCapsule(null)
+      setInput('')
+    }, 3200)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
+  }, [isGenerating, pendingCapsule])
 
   const handleGenerate = () => {
     const trimmedInput = input.trim()
@@ -270,22 +328,12 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
       return
     }
 
+    setPendingCapsule(nextCapsule)
     setIsGenerating(true)
     setSelectedCapsule(null)
     setGenerationError(null)
     setLoadingStep(0)
-
-    const interval = setInterval(() => {
-      setLoadingStep((prev) => (prev < loadingMessages.length - 1 ? prev + 1 : prev))
-    }, 600)
-
-    setTimeout(() => {
-      clearInterval(interval)
-      setSelectedCapsule(nextCapsule)
-      setIsGenerating(false)
-      setInput('')
-      setMode('create')
-    }, 3200)
+    setMode('review') // Switch immediately to Review mode
   }
 
   const handleSaveCapsule = (capsule: StoredCapsule) => {
@@ -301,6 +349,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
 
   const handleOpenCapsule = (capsule: StoredCapsule) => {
     setSelectedCapsule(capsule)
+    setFocusIndex(0)
     setMode('study')
   }
 
@@ -313,6 +362,7 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
     }
 
     setSelectedCapsule(capsule)
+    setFocusIndex(0)
     setMode('study')
 
     if (!activeSession) {
@@ -343,61 +393,44 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
   }
 
   return (
-    <div className="min-h-screen bg-background pb-40 transition-colors duration-500">
-      <header className="mx-auto max-w-7xl px-6 pt-6 lg:pt-8">
+    <div className="min-h-screen bg-background pb-[calc(8rem+env(safe-area-inset-bottom))] transition-colors duration-500 sm:pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      {/* Header */}
+      <header className="mx-auto max-w-5xl px-5 pt-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => onNavigate('dashboard')} className="gap-2">
-            <ArrowLeft size={16} />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onNavigate('dashboard')}
+            className="gap-2 text-muted hover:text-foreground"
+          >
+            <ArrowLeft size={15} />
             Back to dashboard
           </Button>
           <ThemeToggle />
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
-          <div className="max-w-3xl">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-purple">Study capsules</p>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-              Make one capsule, save it, then study it.
-            </h1>
-            <p className="mt-5 text-base leading-7 text-muted sm:text-lg">
-              A clearer path from raw notes to a focused study session.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="grid grid-cols-5 gap-2">
-              {([
-                ['Paste Notes', BookOpen],
-                ['Generate', Zap],
-                ['Review', Eye],
-                ['Save', Save],
-                ['Study', Clock],
-              ] satisfies Array<[string, LucideIcon]>).map(([label, Icon], index) => (
-                <div key={label} className="text-center">
-                  <div className="mx-auto grid size-9 place-items-center rounded-lg border border-purple/15 bg-purple/5 text-purple">
-                    <Icon size={16} />
-                  </div>
-                  <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-muted">{label}</p>
-                  {index < 4 && <div className="mx-auto mt-2 hidden h-px w-full bg-border sm:block" />}
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mt-5 flex flex-col gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple">
+            Study Capsules
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+            Convert Notes to Focus Blocks
+          </h1>
         </div>
       </header>
 
-      <main className="mx-auto mt-8 max-w-7xl space-y-6 px-6">
-        <nav className="grid gap-3 rounded-2xl border border-border bg-card p-2 shadow-sm md:grid-cols-3" aria-label="Capsule modes">
+      <main className="mx-auto mt-6 max-w-5xl px-5 space-y-6">
+        {/* Navigation Modes Bar */}
+        <nav
+          className="flex rounded-xl border border-border bg-card p-1 shadow-sm"
+          aria-label="Capsule workflow stages"
+        >
           {([
-            { id: 'create', label: 'Create Capsule', helper: 'Paste and generate', icon: Sparkles },
-            { id: 'library', label: 'Capsule Library', helper: `${capsules.length} saved`, icon: BookOpen },
-            {
-              id: 'study',
-              label: 'Study Session',
-              helper: isCapsuleSessionActive ? `${elapsedDisplay} active` : activeCapsule ? activeCapsule.title : 'Choose a capsule',
-              icon: Clock,
-            },
-          ] satisfies Array<{ id: CapsuleMode; label: string; helper: string; icon: LucideIcon }>).map((item) => {
+            { id: 'create', label: 'Create', icon: Sparkles },
+            { id: 'review', label: 'Review', icon: Eye },
+            { id: 'library', label: 'Library', icon: BookOpen },
+            { id: 'study', label: 'Study', icon: Clock },
+          ] as const).map((item) => {
             const Icon = item.icon
             const isActive = mode === item.id
 
@@ -406,35 +439,33 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
                 key={item.id}
                 type="button"
                 onClick={() => setMode(item.id)}
-                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors duration-200 ${
-                  isActive ? 'border-purple/30 bg-purple/5 text-foreground' : 'border-transparent text-muted hover:bg-background/70'
+                className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 rounded-lg border transition-all text-center ${
+                  isActive
+                    ? 'border-purple/20 bg-purple/5 text-purple font-bold'
+                    : 'border-transparent text-muted hover:text-foreground'
                 }`}
               >
-                <span className={`grid size-10 shrink-0 place-items-center rounded-lg border ${isActive ? 'border-purple/20 bg-purple/10 text-purple' : 'border-border bg-background text-muted'}`}>
-                  <Icon size={19} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-extrabold">{item.label}</span>
-                  <span className="block truncate text-sm text-muted">{item.helper}</span>
-                </span>
+                <Icon size={16} />
+                <span className="text-[11px] tracking-tight">{item.label}</span>
               </button>
             )
           })}
         </nav>
 
+        {/* ── CREATE MODE ────────────────────────────────────────── */}
         {mode === 'create' && (
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <section className="space-y-4">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6 space-y-5">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Create capsule</p>
-                  <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Paste notes</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                    Paste class notes, textbook excerpts, or a revision outline. Generate one capsule at a time.
+                  <h2 className="text-lg font-bold text-foreground">Paste Class Notes</h2>
+                  <p className="text-xs text-muted mt-0.5">
+                    Input notes or textbook text below to start the AI generation.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wider text-muted">
-                  <span>{input.length} characters</span>
+                <div className="text-[11px] font-semibold text-muted text-right">
+                  <span>{input.length} chars</span>
+                  <span className="mx-2">·</span>
                   <span>{estimatedReadMinutes}m read</span>
                 </div>
               </div>
@@ -442,202 +473,283 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                placeholder="Paste notes, textbook text, transcript, or revision material..."
-                className="h-72 w-full resize-none rounded-xl border border-border bg-background/70 p-5 text-base leading-8 text-foreground placeholder:text-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-purple/20 sm:text-lg"
+                placeholder="Topic: Quantum Mechanics&#10;&#10;Key points:&#10;- Wave-particle duality&#10;- Heisenberg uncertainty principle&#10;- Schrödinger equation"
+                className="min-h-[40vh] w-full resize-y bg-transparent p-5 text-base leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none sm:min-h-[50vh] sm:p-8"
+                aria-label="Paste class notes"
               />
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="max-w-xl text-sm leading-6 text-muted">Next step: generate a capsule, review it, then save it to your library.</p>
-                <Button onClick={handleGenerate} disabled={!input.trim() || isGenerating || Boolean(activeSession)} className="gap-2" variant="secondary">
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Generating
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={18} fill="currentColor" />
-                      Generate Capsule
-                    </>
-                  )}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
+                <p className="text-xs text-muted leading-relaxed max-w-md">
+                  Once clicked, StudySpark will digest this material and construct revision points, concepts, and terms.
+                </p>
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!input.trim() || isGenerating || Boolean(activeSession)}
+                  className="w-full sm:w-auto gap-2 min-h-12 text-sm shadow-sm"
+                  variant="secondary"
+                >
+                  <Zap size={15} fill="currentColor" />
+                  Generate Study Capsule
                 </Button>
               </div>
+
               {generationError && (
-                <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm font-medium leading-6 text-red-500">
+                <div className="rounded-xl border border-red-500/15 bg-red-500/5 p-3 text-xs font-semibold text-red-500">
                   {generationError}
                 </div>
               )}
             </div>
+          </section>
+        )}
 
-            <aside className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Review and save</p>
-              {isGenerating ? (
-                <div className="workflow-enter mt-5">
-                  <div className="flex items-center gap-3">
-                    <Sparkles size={20} className="text-purple" />
-                    <div>
-                      <h2 className="text-xl font-extrabold text-foreground">Building capsule</h2>
-                      <p className="mt-1 text-sm text-muted">{loadingMessages[loadingStep]}</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 grid gap-3">
-                    <div className="skeleton-shimmer h-20 rounded-xl bg-border/50" />
-                    <div className="skeleton-shimmer h-20 rounded-xl bg-border/50" />
-                    <div className="skeleton-shimmer h-20 rounded-xl bg-border/50" />
-                  </div>
-                  <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-border">
+        {/* ── REVIEW MODE ────────────────────────────────────────── */}
+        {mode === 'review' && (
+          <section className="space-y-4">
+            {isGenerating ? (
+              // Generating state
+              <div className="rounded-2xl border border-purple/20 bg-card p-6 shadow-sm space-y-5 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="animate-spin text-purple" size={32} />
+                  <h3 className="text-lg font-bold text-foreground">Analyzing notes</h3>
+                  <p className="text-xs text-muted max-w-xs leading-relaxed">
+                    {loadingMessages[loadingStep]}
+                  </p>
+                </div>
+                <div className="max-w-md mx-auto space-y-2 pt-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/10">
                     <div
-                      className="h-full rounded-full bg-purple progress-transition"
-                      style={{ width: `${((loadingStep + 1) / loadingMessages.length) * 100}%` }}
+                      className="h-full rounded-full bg-purple transition-[width] duration-500 ease-out"
+                      style={{
+                        width: `${((loadingStep + 1) / loadingMessages.length) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
-              ) : selectedCapsule ? (
-                <div className="workflow-enter mt-5 space-y-5">
-                  <div className="rounded-2xl border border-purple/20 bg-purple/5 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-card text-purple">
+              </div>
+            ) : selectedCapsule ? (
+              // Reviewed capsule preview
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-purple/20 bg-purple/5 p-5 sm:p-6 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="grid size-10 place-items-center rounded-xl bg-card text-purple shadow-sm">
                         <Atom size={20} />
                       </div>
-                      <div className="min-w-0">
-                        <h2 className="text-lg font-extrabold text-foreground">{selectedCapsule.title}</h2>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                          {selectedCapsule.subject} - {selectedCapsule.generated.difficulty}
+                      <div>
+                        <h2 className="text-lg font-bold text-foreground">
+                          {selectedCapsule.title}
+                        </h2>
+                        <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                          {selectedCapsule.subject} · {selectedCapsule.generated.difficulty} difficulty
                         </p>
                       </div>
                     </div>
-                    <p className="mt-4 text-sm leading-6 text-muted">{selectedCapsule.generated.summary}</p>
                   </div>
+                  <p className="text-sm leading-relaxed text-muted">
+                    {selectedCapsule.generated.summary}
+                  </p>
+                </div>
 
-                  <div className="space-y-2">
+                {/* Obvious Save and Study Actions */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-start pt-2">
+                  {!selectedCapsuleSaved ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleSaveCapsule(selectedCapsule)}
+                      className="w-full sm:w-auto gap-2 min-h-12 text-sm shadow-sm"
+                    >
+                      <Save size={15} />
+                      Save to Library
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => setMode('library')}
+                      className="w-full sm:w-auto gap-2 min-h-12 text-sm text-teal border-teal/20 bg-teal/5"
+                    >
+                      <CheckCircle2 size={15} />
+                      Saved in Library
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (selectedCapsuleSaved) {
+                        setMode('study')
+                      }
+                    }}
+                    disabled={!selectedCapsuleSaved}
+                    className="w-full sm:w-auto gap-2 min-h-12 text-sm"
+                  >
+                    <Clock size={15} />
+                    Study This Capsule
+                  </Button>
+                </div>
+
+                {/* Capsule Quick Revision Points */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted">
+                    Revision Highlights
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-3">
                     {selectedCapsule.generated.quickRevisionPoints.slice(0, 3).map((point, index) => (
-                      <div key={point} className="flex gap-3 rounded-xl border border-border bg-background/70 p-3 text-sm leading-6 text-muted">
-                        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-purple text-[10px] font-bold text-purple-foreground">
+                      <div
+                        key={point}
+                        className="flex gap-3 rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-muted"
+                      >
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-purple/10 text-[10px] font-bold text-purple">
                           {index + 1}
                         </span>
                         <span>{point}</span>
                       </div>
                     ))}
                   </div>
-
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {!selectedCapsuleSaved ? (
-                      <Button variant="secondary" onClick={() => handleSaveCapsule(selectedCapsule)} className="gap-2">
-                        <Save size={16} />
-                        Save Capsule
-                      </Button>
-                    ) : (
-                      <Button variant="outline" onClick={() => setMode('library')} className="gap-2">
-                        <CheckCircle2 size={16} />
-                        Saved
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (selectedCapsuleSaved) {
-                          setMode('study')
-                        }
-                      }}
-                      disabled={!selectedCapsuleSaved}
-                      className="gap-2"
-                    >
-                      <Clock size={16} />
-                      Study
-                    </Button>
-                  </div>
-                  <Button variant="ghost" onClick={() => setMode('study')} className="w-full gap-2">
-                    <Eye size={16} />
-                    Review Full Capsule
-                  </Button>
                 </div>
-              ) : (
-                <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/60 p-5">
-                  <div className="grid size-12 place-items-center rounded-xl border border-border bg-card text-muted">
-                    <BookOpen size={24} />
-                  </div>
-                  <h2 className="mt-4 text-lg font-extrabold text-foreground">Your capsule will appear here</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    This keeps generation and review in one focused place before the capsule joins your library.
+
+                {/* Details Accordions */}
+                <div className="space-y-2.5">
+                  {[
+                    { label: 'Key concepts', values: selectedCapsule.generated.keyConcepts },
+                    { label: 'Important terms', values: selectedCapsule.generated.importantTerms },
+                    { label: 'Practice questions', values: selectedCapsule.generated.practiceQuestions },
+                  ].map((accordion) => (
+                    <details
+                      key={accordion.label}
+                      className="group rounded-2xl border border-border bg-card p-4 transition-all"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 min-h-[44px] text-xs font-bold uppercase tracking-widest text-muted">
+                        {accordion.label}
+                        <ChevronDown
+                          size={16}
+                          className="shrink-0 text-muted transition-transform group-open:rotate-180"
+                        />
+                      </summary>
+                      <div className="mt-5 space-y-2 border-t border-border/60 pt-5">
+                        {accordion.values.map((val, idx) => (
+                          <div
+                            key={`${val}-${idx}`}
+                            className="rounded-lg bg-background p-3 text-xs leading-relaxed text-muted"
+                          >
+                            {val}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              // Empty State
+              <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 text-center shadow-sm space-y-4">
+                <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-background text-muted">
+                  <Eye size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">No active capsule under review</h3>
+                  <p className="mt-1 max-w-sm mx-auto text-xs leading-relaxed text-muted">
+                    Paste your study notes in the Create tab, generate a capsule, and it will appear here for review.
                   </p>
                 </div>
-              )}
-            </aside>
+                <div className="pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setMode('create')}>
+                    Go to Create Tab
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
+        {/* ── LIBRARY MODE ───────────────────────────────────────── */}
         {mode === 'library' && (
-          <section>
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Capsule library</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">Saved capsules</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">Open a capsule to review it, resume study, or remove it from local storage.</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setMode('create')} className="gap-2 self-start sm:self-auto">
-                <Plus size={14} />
-                New Capsule
-              </Button>
-            </div>
-
+          <section className="space-y-4">
             {capsules.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center shadow-sm">
+              // Empty state
+              <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 text-center shadow-sm space-y-4">
                 <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-background text-muted">
-                  <BookOpen size={24} />
+                  <BookOpen size={20} />
                 </div>
-                <h3 className="mt-4 text-lg font-extrabold text-foreground">Start your capsule library</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-                  Generate a capsule from your notes, review it, and save it here for future study sessions.
-                </p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => setMode('create')}>
-                  Create First Capsule
-                </Button>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Start your capsule library</h3>
+                  <p className="mt-1 max-w-sm mx-auto text-xs leading-relaxed text-muted">
+                    Your generated and saved capsules will live here. Use them to start timed study sessions.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setMode('create')}>
+                    Create First Capsule
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              // Library grid
+              <div className="grid gap-4 sm:grid-cols-2">
                 {capsules.map((capsule) => {
                   const isSelected = activeCapsule?.id === capsule.id
+                  const isActiveCapsuleSession =
+                    activeSession?.source === 'capsule' &&
+                    activeSession.relatedCapsuleId === capsule.id
 
                   return (
                     <article
                       key={capsule.id}
-                      className={`rounded-2xl border bg-card p-5 shadow-sm transition-colors duration-200 ${
-                        isSelected ? 'border-purple/40' : 'border-border hover:border-purple/25'
+                      className={`flex flex-col justify-between rounded-xl border bg-card p-5 shadow-sm transition-all ${
+                        isSelected
+                          ? 'border-purple/40 ring-1 ring-purple/20'
+                          : 'border-border/80 hover:border-purple/20'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="grid size-11 shrink-0 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
-                          <Atom size={21} />
+                      <div className="space-y-3.5">
+                        <div className="flex items-start gap-3">
+                          <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-purple/10 bg-purple/5 text-purple">
+                            <Atom size={20} />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-foreground truncate text-base">
+                              {capsule.title}
+                            </h3>
+                            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                              {capsule.subject} · {formatDate(capsule.createdAt)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate text-lg font-extrabold text-foreground">{capsule.title}</h3>
-                          <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                            {capsule.subject} - {formatDate(capsule.createdAt)}
-                          </p>
-                        </div>
+                        <p className="text-xs leading-relaxed text-muted line-clamp-2">
+                          {capsule.generated.summary}
+                        </p>
                       </div>
 
-                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted">{capsule.generated.summary}</p>
-
-                      <div className="mt-5 grid gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleOpenCapsule(capsule)} className="gap-2">
-                          <Eye size={14} />
-                          Review and Study
+                      <div className="mt-5 grid grid-cols-2 gap-2 pt-1">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleResumeStudy(capsule)}
+                          disabled={Boolean(activeSession && !isActiveCapsuleSession)}
+                          className="min-h-[44px] text-xs gap-1.5 shadow-sm"
+                        >
+                          <RotateCcw size={12} />
+                          {isActiveCapsuleSession ? 'Resume' : 'Study'}
                         </Button>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-[1fr_auto] gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleResumeStudy(capsule)}
-                            disabled={Boolean(activeSession)}
-                            className="gap-2"
+                            onClick={() => handleOpenCapsule(capsule)}
+                            className="min-h-[44px] text-xs"
                           >
-                            <RotateCcw size={14} />
-                            Resume
+                            Review
                           </Button>
-                          <Button variant="danger" size="sm" onClick={() => handleDeleteCapsule(capsule.id)} className="gap-2">
-                            <Trash2 size={14} />
-                            Delete
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => {
+                        if (window.confirm('Delete this capsule?')) {
+                          handleDeleteCapsule(capsule.id)
+                        }
+                      }}
+                            className="min-h-[44px] border-red-500/10 bg-red-500/5 hover:bg-red-500/10 text-red-500 px-3"
+                            aria-label={`Delete ${capsule.title}`}
+                          >
+                            <Trash2 size={13} />
                           </Button>
                         </div>
                       </div>
@@ -649,142 +761,192 @@ export default function StudyCapsulesPage({ onNavigate }: StudyCapsulesPageProps
           </section>
         )}
 
+        {/* ── STUDY MODE ─────────────────────────────────────────── */}
         {mode === 'study' && (
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div>
-              {activeCapsule ? (
-                <>
-                  <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple">Study session</p>
-                      <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">{activeCapsule.title}</h2>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                        Review the capsule, answer the practice prompts, and track a timed pass when you are ready.
+          <section className="relative pb-24 space-y-6">
+            {activeCapsule ? (
+              <div className="mx-auto max-w-xl space-y-6">
+                {/* Minimal Header */}
+                <div className="flex items-center justify-between text-xs font-bold text-muted px-1">
+                  <span>{activeCapsule.title}</span>
+                  <span>
+                    {Math.min(focusIndex + 1, focusItems.length)} / {focusItems.length}
+                  </span>
+                </div>
+
+                {/* Main Focus Card (Distraction-Free) */}
+                {currentFocusItem ? (
+                  <div className="relative rounded-2xl border border-purple/15 bg-gradient-to-b from-card to-background p-6 sm:p-8 min-h-64 flex flex-col justify-between shadow-sm transition-all duration-200">
+                    <div className="space-y-4">
+                      <span className="inline-flex rounded-full border border-purple/15 bg-purple/5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple">
+                        {currentFocusItem.label}
+                      </span>
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-black leading-relaxed text-foreground select-none">
+                        {currentFocusItem.body}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setMode('library')} className="gap-2 self-start sm:self-auto">
-                      <BookOpen size={14} />
-                      Choose Capsule
-                    </Button>
+
+                    {/* Round thumb-friendly slide navigation */}
+                    <div className="flex gap-3 justify-end mt-6">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFocusIndex((currentIndex) => Math.max(0, currentIndex - 1))
+                        }
+                        disabled={focusIndex === 0}
+                        className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all shadow-sm cursor-pointer"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFocusIndex((currentIndex) =>
+                            Math.min(focusItems.length - 1, currentIndex + 1),
+                          )
+                        }
+                        disabled={focusIndex >= focusItems.length - 1}
+                        className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all shadow-sm cursor-pointer"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
                   </div>
-                  <CapsuleCard
-                    topic={activeCapsule.title}
-                    summary={activeCapsule.generated.summary}
-                    concepts={activeCapsule.generated.keyConcepts}
-                    terms={activeCapsule.generated.importantTerms}
-                    revisionPoints={activeCapsule.generated.quickRevisionPoints}
-                    practiceQuestions={activeCapsule.generated.practiceQuestions}
-                    time={`${Math.max(1, Math.ceil(activeCapsule.content.length / 500))}m`}
-                    difficulty={activeCapsule.generated.difficulty}
-                    icon={Atom}
-                  />
-                </>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border bg-card/70 p-8 text-center shadow-sm">
-                  <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-border bg-background text-muted">
-                    <Clock size={28} />
+                ) : null}
+
+                {/* Context drawers (Deemphasized details at bottom) */}
+                <div className="space-y-2.5">
+                  <details className="group rounded-2xl border border-border bg-card p-4 transition-all">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-1 text-xs font-bold uppercase tracking-widest text-muted">
+                      Original Notes Reference
+                      <ChevronDown
+                        size={16}
+                        className="shrink-0 text-muted transition-transform group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="mt-5 border-t border-border/60 pt-5">
+                      <p className="text-xs font-semibold text-foreground">
+                        {activeCapsule.subject}
+                      </p>
+                      <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-muted">
+                        {activeCapsule.content}
+                      </p>
+                    </div>
+                  </details>
+
+                  <details className="group rounded-2xl border border-border bg-card p-4 transition-all">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-1 text-xs font-bold uppercase tracking-widest text-muted">
+                      Study Insights & Analytics
+                      <ChevronDown
+                        size={16}
+                        className="shrink-0 text-muted transition-transform group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="mt-5 border-t border-border/60 pt-5 grid gap-3">
+                      {capsuleInsights.map((insight) => (
+                        <InsightCard
+                          key={insight.label}
+                          label={insight.label}
+                          value={insight.value}
+                          icon={insight.icon}
+                          description={insight.description}
+                          color={insight.color}
+                          progress={insight.progress}
+                        />
+                      ))}
+                    </div>
+                  </details>
+                </div>
+
+                {/* Sticky Bottom Active Session Bar */}
+                <div className="fixed inset-x-0 bottom-20 z-40 px-5 sm:sticky sm:bottom-6 sm:px-0">
+                  <div className="mx-auto max-w-md rounded-2xl border border-border bg-card/95 p-3.5 shadow-xl backdrop-blur-md flex items-center justify-between gap-4">
+                    {isCapsuleSessionActive && activeSession ? (
+                      <>
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-purple">
+                            {activeSession.status === 'running' ? 'Focusing' : 'Paused'}
+                          </p>
+                          <p className="text-xl font-black tabular-nums tracking-tight text-foreground">
+                            {elapsedDisplay}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {activeSession.status === 'running' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="min-h-10 text-xs px-3.5"
+                              onClick={pauseSession}
+                            >
+                              Pause
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="min-h-10 text-xs px-3.5"
+                              onClick={resumeSession}
+                            >
+                              Resume
+                            </Button>
+                          )}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            className="min-h-10 text-xs px-3.5 border-red-500/10 bg-red-500/5 hover:bg-red-500/10 text-red-500"
+                            onClick={endSession}
+                          >
+                            Finish
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted leading-tight max-w-[200px]">
+                          {hasOtherActiveSession
+                            ? 'Finish active session elsewhere.'
+                            : 'Ready to study this capsule.'}
+                        </p>
+                        <Button
+                          onClick={() => handleResumeStudy(activeCapsule)}
+                          disabled={!canStartSelectedCapsule || Boolean(activeSession)}
+                          className="gap-1.5 min-h-10 text-xs px-4"
+                          variant="secondary"
+                        >
+                          <Play size={13} fill="currentColor" />
+                          Start Study Timer
+                        </Button>
+                      </>
+                    )}
                   </div>
-                  <h2 className="mt-5 text-xl font-extrabold text-foreground">Choose a capsule to study</h2>
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-                    Study sessions start from saved capsules, so your review time can be saved to dashboard history.
+                </div>
+              </div>
+            ) : (
+              // Empty State
+              <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 text-center shadow-sm space-y-4">
+                <div className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-background text-muted">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Choose a capsule to study</h3>
+                  <p className="mt-1 max-w-sm mx-auto text-xs leading-relaxed text-muted">
+                    Study sessions are linked to saved capsules to log revision time automatically to history.
                   </p>
-                  <Button variant="outline" size="sm" className="mt-4" onClick={() => setMode(capsules.length > 0 ? 'library' : 'create')}>
+                </div>
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMode(capsules.length > 0 ? 'library' : 'create')}
+                  >
                     {capsules.length > 0 ? 'Open Library' : 'Create Capsule'}
                   </Button>
                 </div>
-              )}
-            </div>
-
-            <aside className="space-y-4">
-              <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-11 place-items-center rounded-xl border border-purple/15 bg-purple/5 text-purple">
-                    <Clock size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Timer</p>
-                    <h2 className="text-xl font-extrabold text-foreground">
-                      {isCapsuleSessionActive ? activeSession.status : hasOtherActiveSession ? 'Active elsewhere' : 'Ready'}
-                    </h2>
-                  </div>
-                </div>
-
-                {isCapsuleSessionActive && activeSession ? (
-                  <div className="session-state-transition mt-6 space-y-5">
-                    <div className="rounded-2xl border border-border bg-background/70 p-4">
-                      <p className="text-sm font-semibold text-foreground">{activeSession.title}</p>
-                      <p className="mt-2 text-4xl font-extrabold tabular-nums tracking-tight text-foreground">{elapsedDisplay}</p>
-                      <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted">active study time</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {activeSession.status === 'running' ? (
-                        <Button onClick={pauseSession} variant="outline">
-                          Pause
-                        </Button>
-                      ) : (
-                        <Button onClick={resumeSession} variant="outline">
-                          Resume
-                        </Button>
-                      )}
-                      <Button onClick={endSession} variant="outline">
-                        End
-                      </Button>
-                    </div>
-                    <p className="text-sm leading-6 text-muted">Ending the session saves this study time to your dashboard history.</p>
-                  </div>
-                ) : (
-                  <div className="session-state-transition mt-6 space-y-4">
-                    <p className="text-sm leading-6 text-muted">
-                      {hasOtherActiveSession
-                        ? 'Finish the current active session before starting a capsule session.'
-                        : canStartSelectedCapsule
-                          ? 'Start a focused pass through this capsule.'
-                          : 'Save or choose a capsule before starting a session.'}
-                    </p>
-                    {activeCapsule && !canStartSelectedCapsule && (
-                      <Button variant="secondary" onClick={() => handleSaveCapsule(activeCapsule)} className="w-full gap-2">
-                        <Save size={16} />
-                        Save Capsule
-                      </Button>
-                    )}
-                    <Button
-                      onClick={() => {
-                        if (activeCapsule) {
-                          handleResumeStudy(activeCapsule)
-                        }
-                      }}
-                      disabled={!canStartSelectedCapsule || Boolean(activeSession)}
-                      className="w-full gap-2"
-                    >
-                      <Clock size={16} />
-                      Start Study Session
-                    </Button>
-                  </div>
-                )}
-              </section>
-
-              {activeCapsule && (
-                <>
-                  <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Original notes</p>
-                    <p className="mt-2 text-sm font-semibold text-foreground">{activeCapsule.subject}</p>
-                    <p className="mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-muted">{activeCapsule.content}</p>
-                  </section>
-
-                  {capsuleInsights.map((insight) => (
-                    <InsightCard
-                      key={insight.label}
-                      label={insight.label}
-                      value={insight.value}
-                      icon={insight.icon}
-                      description={insight.description}
-                      color={insight.color}
-                      progress={insight.progress}
-                    />
-                  ))}
-                </>
-              )}
-            </aside>
+              </div>
+            )}
           </section>
         )}
       </main>

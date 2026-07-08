@@ -35,6 +35,15 @@ export interface StudyMetrics {
   recentActivity: StudySession[]
 }
 
+export interface CompletedStudyPlanTask {
+  id: string
+  title: string
+  subject: string
+  durationMinutes: number
+  completedAt: string
+  dateKey: string
+}
+
 export interface StartSessionInput {
   source: StudySessionSource
   title: string
@@ -51,7 +60,8 @@ export interface StudyContextValue {
   sessions: StudySession[]
   activeSession: ActiveStudySession | null
   metrics: StudyMetrics
-  elapsedSeconds: number
+  completedTasks: CompletedStudyPlanTask[]
+  completeTask: (task: { id: string; title: string; subject: string; durationMinutes: number; dateKey: string }) => void
   startSession: (session: StartSessionInput) => void
   seedDemoSessions: (sessions: StudySession[]) => void
   resetStudySessions: () => void
@@ -69,6 +79,22 @@ export function useStudy() {
 
   if (!context) {
     throw new Error('useStudy must be used inside StudyProvider')
+  }
+
+  return context
+}
+
+export interface StudyTimerContextValue {
+  elapsedSeconds: number
+}
+
+export const StudyTimerContext = createContext<StudyTimerContextValue | undefined>(undefined)
+
+export function useStudyTimer() {
+  const context = useContext(StudyTimerContext)
+
+  if (!context) {
+    throw new Error('useStudyTimer must be used inside StudyTimerProvider')
   }
 
   return context

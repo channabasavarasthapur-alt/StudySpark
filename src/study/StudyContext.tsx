@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   StudyContext,
+  StudyTimerContext,
   type ActiveStudySession,
   type StartSessionInput,
   type StudyContextValue,
   type StudyMetrics,
   type StudySession,
+  type CompletedStudyPlanTask,
 } from './studyContext'
 import { getLocalDateKey } from './setupPreferences'
 
@@ -102,12 +104,54 @@ function calculateElapsedMs(session: ActiveStudySession | null, now: number) {
   const currentMs = session.status === 'paused' && session.pausedAt ? new Date(session.pausedAt).getTime() : now
 
   return Math.max(0, currentMs - startedAtMs - session.accumulatedPausedMs)
+}function getCombinedSessions(sessions: StudySession[], completedTasks: CompletedStudyPlanTask[]): StudySession[] {
+  const completedTaskSessions: StudySession[] = completedTasks.map((task) => ({
+    id: task.id,
+    source: 'revision',
+    title: task.title,
+    startedAt: task.completedAt,
+    completedAt: task.completedAt,
+    durationMinutes: task.durationMinutes,
+    plannedMinutes: task.durationMinutes,
+  }))
+
+  const combined: StudySession[] = [...sessions]
+
+  const sessionKeys = new Set(
+    sessions.map((s) => {
+      const date = getLocalDateKey(new Date(s.completedAt))
+      const titleLower = s.title.toLowerCase()
+      return `${date}-${titleLower}`
+    })
+  )
+
+  for (const taskSession of completedTaskSessions) {
+    const taskDate = getLocalDateKey(new Date(taskSession.completedAt))
+    const taskSubjectLower = taskSession.title.split(' ')[0]?.toLowerCase() || ''
+    
+    const isAlreadyCovered = Array.from(sessionKeys).some((key) => {
+      return key.startsWith(taskDate) && key.includes(taskSubjectLower)
+    })
+
+    if (!isAlreadyCovered) {
+      combined.push(taskSession)
+    }
+  }
+
+  return combined
 }
 
 function calculateCurrentStreak(sessions: StudySession[]) {
   const studiedDays = new Set(sessions.map((session) => getDateKey(new Date(session.completedAt))))
   let streak = 0
   const cursor = new Date()
+
+  if (!studiedDays.has(getDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1)
+    if (!studiedDays.has(getDateKey(cursor))) {
+      return 0
+    }
+  }
 
   while (studiedDays.has(getDateKey(cursor))) {
     streak += 1
@@ -149,39 +193,112 @@ function calculateMetrics(sessions: StudySession[]): StudyMetrics {
 export function StudyProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<StudySession[]>(loadSessions)
   const [activeSession, setActiveSession] = useState<ActiveStudySession | null>(loadActiveSession)
-  const [now, setNow] = useState(() => Date.now())
+  const [completedTasks, setCompletedTasks] = useState<CompletedStudyPlanTask[]>(() => {
+    try {
+      const stored = localStorage.getItem('studyspark.completedStudyPlanTasks')
+      const parsedValue = stored ? JSON.parse(stored) : []
+      if (!Array.isArray(parsedValue)) {
+        return []
+      }
+      return parsedValue.filter((task): task is CompletedStudyPlanTask => {
+        const possibleTask = task as Partial<CompletedStudyPlanTask>
+        return (
+          typeof possibleTask.id === 'string' &&
+          typeof possibleTask.title === 'string' &&
+          typeof possibleTask.subject === 'string' &&
+          typeof possibleTask.durationMinutes === 'number' &&
+          typeof possibleTask.completedAt === 'string' &&
+          typeof possibleTask.dateKey === 'string'
+        )
+      })
+    } catch {
+      return []
+    }
+  })
 
   useEffect(() => {
-    window.localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions))
+    const handleStorage = () => {
+      try {
+        const stored = localStorage.getItem('studyspark.completedStudyPlanTasks')
+        const parsedValue = stored ? JSON.parse(stored) : []
+        if (Array.isArray(parsedValue)) {
+          setCompletedTasks(parsedValue.filter((task): task is CompletedStudyPlanTask => {
+            const possibleTask = task as Partial<CompletedStudyPlanTask>
+            return (
+              typeof possibleTask.id === 'string' &&
+              typeof possibleTask.title === 'string' &&
+              typeof possibleTask.subject === 'string' &&
+              typeof possibleTask.durationMinutes === 'number' &&
+              typeof possibleTask.completedAt === 'string' &&
+              typeof possibleTask.dateKey === 'string'
+            )
+          }))
+        } else {
+          setCompletedTasks([])
+        }
+      } catch (e) {
+        console.error('Failed to load completed tasks in StudyContext:', e)
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('studyspark.completedStudyPlanTasks', JSON.stringify(completedTasks))
+    } catch (e) {
+      console.error('Failed to save completed tasks to localStorage:', e)
+    }
+  }, [completedTasks])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions))
+    } catch (e) {
+      console.error('Failed to save study sessions to localStorage:', e)
+    }
   }, [sessions])
-
   useEffect(() => {
-    if (activeSession) {
-      window.localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify(activeSession))
-    } else {
-      window.localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY)
+    try {
+      if (activeSession) {
+        window.localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify(activeSession))
+      } else {
+        window.localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY)
+      }
+    } catch (e) {
+      console.error('Failed to update active session in localStorage:', e)
     }
   }, [activeSession])
 
-  useEffect(() => {
-    if (activeSession?.status !== 'running') {
-      return
-    }
+  const combinedSessions = useMemo(() => {
+    return getCombinedSessions(sessions, completedTasks)
+  }, [sessions, completedTasks])
 
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1000)
-
-    return () => window.clearInterval(intervalId)
-  }, [activeSession?.status])
-
-  const metrics = useMemo(() => calculateMetrics(sessions), [sessions])
-  const elapsedSeconds = Math.floor(calculateElapsedMs(activeSession, now) / 1000)
+  const metrics = useMemo(() => calculateMetrics(combinedSessions), [combinedSessions])
 
   const value = useMemo<StudyContextValue>(
     () => ({
       sessions,
       activeSession,
       metrics,
-      elapsedSeconds,
+      completedTasks,
+      completeTask: (task) => {
+        setCompletedTasks((currentTasks) => {
+          if (currentTasks.some((t) => t.id === task.id)) {
+            return currentTasks
+          }
+          const newTask: CompletedStudyPlanTask = {
+            id: task.id,
+            title: task.title,
+            subject: task.subject,
+            durationMinutes: task.durationMinutes,
+            completedAt: new Date().toISOString(),
+            dateKey: task.dateKey,
+          }
+          return [newTask, ...currentTasks]
+        })
+      },
       startSession: ({ source, title, plannedMinutes, relatedCapsuleId }: StartSessionInput) => {
         setActiveSession((currentSession) => {
           if (currentSession) {
@@ -201,17 +318,14 @@ export function StudyProvider({ children }: { children: ReactNode }) {
             accumulatedPausedMs: 0,
           }
         })
-        setNow(Date.now())
       },
       seedDemoSessions: (demoSessions: StudySession[]) => {
         setActiveSession(null)
         setSessions(demoSessions)
-        setNow(Date.now())
       },
       resetStudySessions: () => {
         setActiveSession(null)
         setSessions([])
-        setNow(Date.now())
       },
       removeCapsuleStudyState: ({ capsuleId, title }) => {
         setActiveSession((currentSession) => {
@@ -227,13 +341,20 @@ export function StudyProvider({ children }: { children: ReactNode }) {
           return null
         })
         setSessions((currentSessions) =>
-          currentSessions.filter(
-            (session) =>
-              session.source !== 'capsule' ||
-              (session.relatedCapsuleId !== capsuleId && !(session.relatedCapsuleId === undefined && session.title === title)),
-          ),
+          currentSessions.map((session) => {
+            if (
+              session.source === 'capsule' &&
+              (session.relatedCapsuleId === capsuleId ||
+                (session.relatedCapsuleId === undefined && session.title === title))
+            ) {
+              return {
+                ...session,
+                relatedCapsuleId: undefined,
+              }
+            }
+            return session
+          }),
         )
-        setNow(Date.now())
       },
       pauseSession: () => {
         setActiveSession((currentSession) => {
@@ -247,7 +368,6 @@ export function StudyProvider({ children }: { children: ReactNode }) {
             pausedAt: new Date().toISOString(),
           }
         })
-        setNow(Date.now())
       },
       resumeSession: () => {
         setActiveSession((currentSession) => {
@@ -265,41 +385,107 @@ export function StudyProvider({ children }: { children: ReactNode }) {
             accumulatedPausedMs: currentSession.accumulatedPausedMs + Math.max(0, resumedAtMs - pausedAtMs),
           }
         })
-        setNow(Date.now())
       },
       endSession: () => {
-        setActiveSession((currentSession) => {
-          if (!currentSession) {
-            return currentSession
+        if (!activeSession) {
+          return
+        }
+
+        const completedAt = new Date()
+        const durationMinutes = Math.max(1, Math.ceil(calculateElapsedMs(activeSession, completedAt.getTime()) / 60000))
+
+        const newSession = {
+          id: activeSession.id,
+          source: activeSession.source,
+          title: activeSession.title,
+          relatedCapsuleId: activeSession.relatedCapsuleId,
+          startedAt: activeSession.startedAt,
+          completedAt: completedAt.toISOString(),
+          durationMinutes,
+          plannedMinutes: activeSession.plannedMinutes,
+        }
+
+        setSessions((currentSessions) => [newSession, ...currentSessions])
+
+        try {
+          const storedPrefs = localStorage.getItem('studyspark.setupPreferences')
+          if (storedPrefs) {
+            const preferences = JSON.parse(storedPrefs)
+            const subjects = (preferences.subjects || '')
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+
+            const titleLower = activeSession.title.toLowerCase()
+            const matchingSubject = subjects.find((sub: string) => titleLower.includes(sub.toLowerCase()))
+
+            if (matchingSubject) {
+              const dateKey = getLocalDateKey(completedAt)
+              const taskId = `${dateKey}-${matchingSubject.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+              
+              setCompletedTasks((currentTasks) => {
+                if (currentTasks.some((t) => t.id === taskId)) {
+                  return currentTasks
+                }
+                const newTask: CompletedStudyPlanTask = {
+                  id: taskId,
+                  title: `${matchingSubject} study block`,
+                  subject: matchingSubject,
+                  durationMinutes: newSession.durationMinutes,
+                  completedAt: completedAt.toISOString(),
+                  dateKey,
+                }
+                return [newTask, ...currentTasks]
+              })
+            }
           }
+        } catch (e) {
+          console.error('Failed to auto-complete plan task:', e)
+        }
 
-          const completedAt = new Date()
-          const durationMinutes = Math.max(1, Math.ceil(calculateElapsedMs(currentSession, completedAt.getTime()) / 60000))
-
-          setSessions((currentSessions) => [
-            {
-              id: currentSession.id,
-              source: currentSession.source,
-              title: currentSession.title,
-              relatedCapsuleId: currentSession.relatedCapsuleId,
-              startedAt: currentSession.startedAt,
-              completedAt: completedAt.toISOString(),
-              durationMinutes,
-              plannedMinutes: currentSession.plannedMinutes,
-            },
-            ...currentSessions,
-          ])
-
-          return null
-        })
-        setNow(Date.now())
+        setActiveSession(null)
       },
       deleteSession: (sessionId: string) => {
         setSessions((currentSessions) => currentSessions.filter((session) => session.id !== sessionId))
       },
     }),
-    [activeSession, elapsedSeconds, metrics, sessions],
+    [activeSession, metrics, sessions, completedTasks],
   )
 
-  return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>
+  return (
+    <StudyContext.Provider value={value}>
+      <StudyTimerProvider activeSession={activeSession}>
+        {children}
+      </StudyTimerProvider>
+    </StudyContext.Provider>
+  )
+}
+
+interface StudyTimerProviderProps {
+  children: ReactNode
+  activeSession: ActiveStudySession | null
+}
+
+export function StudyTimerProvider({ children, activeSession }: StudyTimerProviderProps) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (activeSession?.status !== 'running') {
+      return
+    }
+
+    const timeoutId = setTimeout(() => setNow(Date.now()), 0)
+    const intervalId = window.setInterval(() => setNow(Date.now()), 1000)
+
+    return () => {
+      clearTimeout(timeoutId)
+      window.clearInterval(intervalId)
+    }
+  }, [activeSession?.status])
+
+  const elapsedSeconds = Math.floor(calculateElapsedMs(activeSession, now) / 1000)
+
+  const value = useMemo(() => ({ elapsedSeconds }), [elapsedSeconds])
+
+  return <StudyTimerContext.Provider value={value}>{children}</StudyTimerContext.Provider>
 }

@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './components/ThemeToggle'
 import { ProtectedRoute, PublicOnlyRoute } from './components/auth/AuthGate'
-import DashboardPage from './pages/DashboardPage'
-import ExamsPage from './pages/ExamsPage'
-import StudyCapsulesPage from './pages/StudyCapsulesPage'
-import SetupPage from './pages/SetupPage'
-import AuthPage from './pages/AuthPage'
+
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const ExamsPage = lazy(() => import('./pages/ExamsPage'))
+const StudyCapsulesPage = lazy(() => import('./pages/StudyCapsulesPage'))
+const SetupPage = lazy(() => import('./pages/SetupPage'))
+const AuthPage = lazy(() => import('./pages/AuthPage'))
 import { Button } from './components/ui/Button'
 import { Dock } from './components/layout/Dock'
 import type { View } from './types/navigation'
@@ -14,13 +15,11 @@ import {
   ArrowRight,
   BookOpenCheck,
   CheckCircle2,
-  ClipboardCheck,
+  ChevronRight,
   Clock,
   FileText,
   GraduationCap,
-  Play,
   Sparkles,
-  Target,
 } from 'lucide-react'
 
 const viewPaths: Record<View, string> = {
@@ -34,6 +33,17 @@ const viewPaths: Record<View, string> = {
 const pathViews: Record<string, View> = Object.fromEntries(
   Object.entries(viewPaths).map(([view, path]) => [path, view]),
 ) as Record<string, View>
+
+function PageLoading() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-background text-foreground transition-colors duration-500">
+      <div className="flex flex-col items-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-muted border-t-purple" />
+        <p className="text-xs font-semibold text-muted">Loading page...</p>
+      </div>
+    </div>
+  )
+}
 
 function AppShell() {
   const location = useLocation()
@@ -57,294 +67,343 @@ function AppShell() {
 
   if (view === 'dashboard') {
     return (
-      <>
+      <Suspense fallback={<PageLoading />}>
         <DashboardPage onNavigate={handleNavigate} />
         <Dock activeView={view} onNavigate={handleNavigate} />
-      </>
+      </Suspense>
     )
   }
 
   if (view === 'capsules') {
     return (
-      <>
+      <Suspense fallback={<PageLoading />}>
         <StudyCapsulesPage onNavigate={handleNavigate} />
         <Dock activeView={view} onNavigate={handleNavigate} />
-      </>
+      </Suspense>
     )
   }
 
   if (view === 'setup') {
     return (
-      <>
+      <Suspense fallback={<PageLoading />}>
         <SetupPage onNavigate={handleNavigate} />
         <Dock activeView={view} onNavigate={handleNavigate} />
-      </>
+      </Suspense>
     )
   }
 
   if (view === 'exams') {
     return (
-      <>
+      <Suspense fallback={<PageLoading />}>
         <ExamsPage onNavigate={handleNavigate} />
         <Dock activeView={view} onNavigate={handleNavigate} />
-      </>
+      </Suspense>
     )
   }
 
+  /* ── Landing Page ───────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+      {/* Navigation */}
       <nav
-        className={`fixed inset-x-0 top-0 z-50 flex h-20 items-center transition-colors duration-200 ${
-          scrolled ? 'border-b border-border bg-background/95 backdrop-blur' : 'bg-background/80 backdrop-blur'
+        className={`fixed inset-x-0 top-0 z-50 flex items-center transition-all duration-200 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] ${
+          scrolled
+            ? 'border-b border-border bg-background/95 backdrop-blur-lg'
+            : 'bg-background/80 backdrop-blur'
         }`}
       >
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-foreground text-background font-black">S</div>
-            <span className="text-xl font-bold tracking-tight">StudySpark</span>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-foreground text-sm font-black text-background">
+              S
+            </div>
+            <span className="text-lg font-bold tracking-tight">StudySpark</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="hidden sm:inline-flex">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
               Log In
             </Button>
             <Button size="sm" onClick={() => handleNavigate('setup')}>
-              Start Studying
+              Get Started
             </Button>
           </div>
         </div>
       </nav>
 
-      <main className="relative pt-20">
-        <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-12 lg:grid-cols-[0.9fr_1.1fr] lg:pb-24 lg:pt-20">
-          <div>
-            <div className="mb-6 flex w-fit items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
-              <Sparkles size={16} className="text-purple" />
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted">Notes to exam readiness</span>
-            </div>
+      <main className="relative pt-[calc(4rem+env(safe-area-inset-top))]">
+        {/* ── Hero ────────────────────────────────────────────────── */}
+        <section className="mx-auto max-w-xl px-5 pb-10 pt-8 text-center sm:px-6 sm:pb-14 sm:pt-14">
+          <div className="landing-enter mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 shadow-sm">
+            <Sparkles size={14} className="text-purple" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+              AI Study Engine
+            </span>
+          </div>
 
-            <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-5xl lg:text-6xl">
-              Turn messy class notes into a study plan you can actually follow.
-            </h1>
+          <h1 className="landing-enter landing-enter-d1 text-[28px] font-extrabold leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
+            Notes in.{' '}
+            <span className="text-gradient">Exam ready</span> out.
+          </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
-              Paste what you learned today. StudySpark shapes it into an AI capsule, starts focused practice, and shows what is left before the exam.
-            </p>
+          <p className="landing-enter landing-enter-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-muted sm:mt-5 sm:text-base">
+            Paste what you learned. StudySpark shapes it into a study capsule,
+            starts focused practice, and tracks your exam readiness.
+          </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" onClick={() => handleNavigate('setup')} className="w-full sm:w-auto">
-                Create My Study Plan
-                <ArrowRight size={18} />
-              </Button>
-              <Button variant="outline" size="lg" onClick={handleDemoScroll} className="w-full sm:w-auto">
-                <Play size={18} />
-                See Demo
-              </Button>
-            </div>
-
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                ['Notes', FileText],
-                ['AI Capsule', Sparkles],
-                ['Study', BookOpenCheck],
-                ['Exam Ready', GraduationCap],
-              ].map(([label, Icon], index) => (
-                <div key={label as string} className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <Icon size={18} className={index === 1 ? 'text-purple' : index === 3 ? 'text-teal' : 'text-muted'} />
-                    <span className="text-xs font-bold text-muted">{index + 1}</span>
+          {/* Pipeline: Notes → Capsule → Study → Ready */}
+          <div className="landing-enter landing-enter-d3 mx-auto mt-7 flex max-w-xs items-center justify-between sm:mt-8 sm:max-w-sm">
+            {([
+              { icon: FileText, label: 'Notes', color: 'text-muted' },
+              { icon: Sparkles, label: 'Capsule', color: 'text-purple' },
+              { icon: BookOpenCheck, label: 'Study', color: 'text-foreground' },
+              { icon: GraduationCap, label: 'Ready', color: 'text-teal' },
+            ] as const).map((step, i) => {
+              const Icon = step.icon
+              return (
+                <Fragment key={step.label}>
+                  {i > 0 && (
+                    <ChevronRight size={14} className="shrink-0 text-border" />
+                  )}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className={`flex size-8 items-center justify-center rounded-xl border border-border bg-card shadow-sm ${step.color}`}
+                    >
+                      <Icon size={15} strokeWidth={2} />
+                    </div>
+                    <span className="text-[11px] font-semibold text-muted">
+                      {step.label}
+                    </span>
                   </div>
-                  <p className="text-sm font-bold text-foreground">{label as string}</p>
-                </div>
-              ))}
-            </div>
+                </Fragment>
+              )
+            })}
           </div>
 
-          <div id="product-demo" className="scroll-mt-28 rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple">Live product flow</p>
-                <h2 className="mt-1 text-xl font-extrabold tracking-tight">Biology revision capsule</h2>
-              </div>
-              <div className="rounded-lg bg-teal/10 px-3 py-2 text-sm font-black text-teal">82% ready</div>
+          {/* CTAs */}
+          <div className="landing-enter landing-enter-d4 mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:justify-center">
+            <Button
+              size="lg"
+              onClick={() => handleNavigate('setup')}
+              className="w-full sm:w-auto"
+            >
+              Start Studying
+              <ArrowRight size={18} />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleDemoScroll}
+              className="w-full sm:w-auto"
+            >
+              See How It Works
+            </Button>
+          </div>
+        </section>
+
+        {/* ── Product Demo ────────────────────────────────────────── */}
+        <section
+          id="product-demo"
+          className="scroll-mt-20 px-5 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12"
+        >
+          <div className="mx-auto max-w-2xl">
+            <div className="landing-demo-enter mb-5 text-center sm:mb-7">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple">
+                Live Demo
+              </p>
+              <h2 className="mt-2 text-xl font-extrabold tracking-tight sm:text-2xl">
+                From notes to exam readiness
+              </h2>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="rounded-lg border border-border bg-background/70 p-4">
-                <div className="mb-4 flex items-center gap-2">
-                  <FileText size={18} className="text-muted" />
-                  <p className="text-sm font-bold">Pasted notes</p>
+            <div className="landing-demo-enter overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              {/* Demo header */}
+              <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+                <div>
+                  <p className="text-sm font-bold">Biology · Photosynthesis</p>
+                  <p className="mt-0.5 text-xs text-muted">Revision capsule</p>
                 </div>
-                <div className="space-y-3 text-sm leading-6 text-muted">
-                  <p className="rounded-lg bg-card p-3 shadow-sm">Photosynthesis uses light energy to make glucose in chloroplasts.</p>
-                  <p className="rounded-lg bg-card p-3 shadow-sm">Light reaction splits water, releases oxygen, and makes ATP.</p>
-                  <p className="rounded-lg bg-card p-3 shadow-sm">Calvin cycle uses carbon dioxide to build sugars.</p>
+                <div className="rounded-lg bg-teal/10 px-3 py-1.5 text-sm font-black text-teal">
+                  82%
                 </div>
               </div>
 
-              <div className="rounded-lg border border-purple/20 bg-purple/5 p-4">
-                <div className="mb-4 flex items-center gap-2">
-                  <Sparkles size={18} className="text-purple" />
-                  <p className="text-sm font-bold">AI capsule</p>
+              {/* Transformation: Notes → AI Capsule */}
+              <div className="grid sm:grid-cols-2">
+                <div className="border-b border-border p-4 sm:border-b-0 sm:border-r sm:p-5">
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <FileText size={14} className="text-muted" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+                      Your Notes
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {[
+                      'Photosynthesis uses light energy to make glucose in chloroplasts.',
+                      'Light reaction splits water, releases oxygen, and makes ATP.',
+                      'Calvin cycle uses carbon dioxide to build sugars.',
+                    ].map((note) => (
+                      <p
+                        key={note}
+                        className="rounded-lg bg-background p-2 text-[13px] leading-snug text-muted"
+                      >
+                        {note}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-extrabold tracking-tight">Photosynthesis in 12 minutes</h3>
-                <ul className="mt-4 space-y-3 text-sm leading-6 text-foreground">
-                  {[
-                    'Core idea: light energy becomes chemical energy.',
-                    'Must know: chloroplast, ATP, glucose, oxygen.',
-                    'Practice next: label the two-stage process.',
-                  ].map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <CheckCircle2 size={17} className="mt-1 shrink-0 text-teal" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border border-border bg-background/70 p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Clock size={18} className="text-purple" />
-                  <p className="text-sm font-bold">Study block</p>
+                <div className="p-4 sm:p-5">
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <Sparkles size={14} className="text-purple" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple">
+                      AI Capsule
+                    </p>
+                  </div>
+                  <p className="text-sm font-bold">Photosynthesis in 12 min</p>
+                  <ul className="mt-2.5 space-y-2">
+                    {[
+                      'Core idea: light energy becomes chemical energy.',
+                      'Must know: chloroplast, ATP, glucose, oxygen.',
+                      'Practice next: label the two-stage process.',
+                    ].map((item) => (
+                      <li
+                        key={item}
+                        className="flex gap-2 text-[13px] leading-snug"
+                      >
+                        <CheckCircle2
+                          size={14}
+                          className="mt-0.5 shrink-0 text-teal"
+                        />
+                        <span className="text-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="text-3xl font-black tabular-nums">12:00</p>
-                <p className="mt-1 text-sm text-muted">Capsule review plus recall prompt</p>
               </div>
 
-              <div className="rounded-lg border border-border bg-background/70 p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Target size={18} className="text-purple" />
-                  <p className="text-sm font-bold">Next question</p>
+              {/* Stats strip */}
+              <div className="grid grid-cols-3 border-t border-border">
+                <div className="flex flex-col items-center py-3">
+                  <Clock size={15} className="mb-1 text-purple" />
+                  <p className="text-base font-black tabular-nums">12:00</p>
+                  <p className="text-[11px] text-muted">Study block</p>
                 </div>
-                <p className="text-sm leading-6 text-muted">Explain why oxygen is released during the light reaction.</p>
-              </div>
-
-              <div className="rounded-lg border border-border bg-background/70 p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <ClipboardCheck size={18} className="text-teal" />
-                  <p className="text-sm font-bold">Exam ready</p>
+                <div className="flex flex-col items-center border-x border-border py-3">
+                  <BookOpenCheck size={15} className="mb-1 text-purple" />
+                  <p className="text-base font-black">3</p>
+                  <p className="text-[11px] text-muted">Key topics</p>
                 </div>
-                <div className="h-2 rounded-full bg-border">
-                  <div className="h-2 w-[82%] rounded-full bg-teal" />
+                <div className="flex flex-col items-center py-3">
+                  <GraduationCap size={15} className="mb-1 text-teal" />
+                  <p className="text-base font-black">82%</p>
+                  <p className="text-[11px] text-muted">Exam ready</p>
                 </div>
-                <p className="mt-3 text-sm text-muted">3 weak topics left</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="border-y border-border bg-card/60 px-6 py-14">
-          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple">The transformation</p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">From scattered notes to clear next steps.</h2>
-              <p className="mt-4 max-w-xl text-base leading-7 text-muted">
-                Students do not need another dashboard to manage. They need to know what to read, what to recall, and what still needs work.
+        {/* ── Bottom CTA ──────────────────────────────────────────── */}
+        <section className="px-5 py-10 sm:px-6 sm:py-14">
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:flex-row sm:gap-6 sm:p-8 sm:text-left">
+            <div className="flex-1">
+              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+                Ready for today&apos;s study action?
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Set your subjects, exam date, and available study time.
               </p>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ['Before', 'Loose notes, screenshots, and half-finished revision lists.'],
-                ['StudySpark', 'Capsules group the ideas and turn them into short study actions.'],
-                ['After', 'A visible readiness score and a focused plan for the next session.'],
-              ].map(([title, copy]) => (
-                <div key={title} className="rounded-lg border border-border bg-background p-5 shadow-sm">
-                  <p className="text-sm font-extrabold text-foreground">{title}</p>
-                  <p className="mt-3 text-sm leading-6 text-muted">{copy}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-6 py-16">
-          <div className="grid gap-8 rounded-lg border border-border bg-card p-6 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
-            <div>
-              <h2 className="text-3xl font-extrabold tracking-tight">Ready to turn today's notes into today's study session?</h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-                Set your subjects, exam date, and available study time. StudySpark will help organize the rest.
-              </p>
-            </div>
-            <Button size="lg" onClick={() => handleNavigate('setup')} className="w-full sm:w-auto">
-              Create My Study Plan
+            <Button
+              size="lg"
+              onClick={() => handleNavigate('setup')}
+              className="w-full shrink-0 sm:w-auto"
+            >
+              Create Study Plan
               <ArrowRight size={18} />
             </Button>
           </div>
         </section>
 
-        <footer className="border-t border-border px-6 py-10">
-          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-3">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background font-black text-sm">S</div>
-              <span className="text-sm font-bold tracking-tight">StudySpark</span>
+        {/* ── Footer ──────────────────────────────────────────────── */}
+        <footer className="border-t border-border px-5 py-8 sm:px-6">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-md bg-foreground text-xs font-black text-background">
+                S
+              </div>
+              <span className="text-sm font-bold tracking-tight">
+                StudySpark
+              </span>
             </div>
-            <p className="text-center text-xs text-muted md:text-right">Built for students turning class material into exam confidence.</p>
+            <p className="text-center text-xs text-muted sm:text-right">
+              Built for students turning class material into exam confidence.
+            </p>
           </div>
         </footer>
       </main>
-
     </div>
   )
 }
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<AppShell />} />
-      <Route
-        path="/login"
-        element={
-          <PublicOnlyRoute>
-            <AuthPage mode="login" />
-          </PublicOnlyRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicOnlyRoute>
-            <AuthPage mode="signup" />
-          </PublicOnlyRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/capsules"
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/exams"
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/setup"
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<PageLoading />}>
+      <Routes>
+        <Route path="/" element={<AppShell />} />
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <AuthPage mode="login" />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicOnlyRoute>
+              <AuthPage mode="signup" />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/capsules"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/exams"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
 

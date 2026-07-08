@@ -5,30 +5,60 @@ import { isSupabaseConfigured, supabase } from './supabaseClient'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(isSupabaseConfigured)
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      return
+    }
+
     let isMounted = true
+    let subscription: { unsubscribe: () => void } | null = null
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) {
-        return
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isMounted) {
+          return
+        }
+        setSession(data.session)
+      })
+      .catch((error) => {
+        console.error('Failed to load session in AuthProvider:', error)
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
+
+    try {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        if (!isMounted) {
+          return
+        }
+        setSession(nextSession)
+        setIsLoading(false)
+      })
+      subscription = sub
+    } catch (error) {
+      console.error('Failed to register auth state listener in AuthProvider:', error)
+      if (isMounted) {
+        setTimeout(() => {
+          if (isMounted) {
+            setIsLoading(false)
+          }
+        }, 0)
       }
-
-      setSession(data.session)
-      setIsLoading(false)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setIsLoading(false)
-    })
+    }
 
     return () => {
       isMounted = false
-      subscription.unsubscribe()
+      if (subscription) {
+        subscription.unsubscribe()
+      }
     }
   }, [])
 

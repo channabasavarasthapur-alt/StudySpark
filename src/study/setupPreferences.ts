@@ -110,12 +110,19 @@ export function validateSetupPreferences(preferences: SetupPreferences): SetupVa
   })
   const examDateIsPast = Boolean(preferences.examDate && preferences.examDate < getTodayDateKey())
   const studyTargetIsZero = !Number.isFinite(preferences.dailyStudyMinutes) || preferences.dailyStudyMinutes <= 0
+  const hasSubjects = normalizedSubjects.length > 0
+  const hasExamDate = Boolean(preferences.examDate)
 
   return {
     duplicateSubjects: [...new Set(duplicateSubjects)],
     examDateIsPast,
     studyTargetIsZero,
-    isValid: duplicateSubjects.length === 0 && !examDateIsPast && !studyTargetIsZero,
+    isValid:
+      hasSubjects &&
+      hasExamDate &&
+      duplicateSubjects.length === 0 &&
+      !examDateIsPast &&
+      !studyTargetIsZero,
   }
 }
 
@@ -136,7 +143,11 @@ export function loadSetupPreferences(): SetupPreferences {
 export function saveSetupPreferences(preferences: SetupPreferences) {
   const normalizedPreferences = normalizePreferences(preferences)
 
-  localStorage.setItem(setupStorageKey, JSON.stringify(normalizedPreferences))
+  try {
+    localStorage.setItem(setupStorageKey, JSON.stringify(normalizedPreferences))
+  } catch (e) {
+    console.error('Failed to save setup preferences to localStorage:', e)
+  }
   window.dispatchEvent(new CustomEvent(setupPreferencesChangedEvent))
 }
 

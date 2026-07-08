@@ -31,7 +31,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { isLoading, session } = useAuth()
   const location = useLocation()
-  const fromPath = typeof location.state?.from?.pathname === 'string' ? location.state.from.pathname : '/dashboard'
+  let fromPath = typeof location.state?.from?.pathname === 'string' ? location.state.from.pathname : '/dashboard'
+  if (!fromPath.startsWith('/') || fromPath.startsWith('//')) {
+    fromPath = '/dashboard'
+  }
 
   if (isLoading) {
     return <AuthLoadingScreen />
