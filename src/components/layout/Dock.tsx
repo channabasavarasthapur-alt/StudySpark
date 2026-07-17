@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, BookOpen, GraduationCap, Settings, Clock } from 'lucide-react'
+import { LayoutDashboard, BookOpen, GraduationCap, Settings, Clock, Bot } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { View } from '../../types/navigation'
 import { useStudy, useStudyTimer, type StudySessionSource } from '../../study/studyContext'
@@ -84,6 +84,7 @@ export function Dock({ activeView, onNavigate }: DockProps) {
   const items: { id: View; icon: LucideIcon; label: string }[] = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'capsules', icon: BookOpen, label: 'Capsules' },
+    { id: 'tutor', icon: Bot, label: 'AI Tutor' },
     { id: 'exams', icon: GraduationCap, label: 'Exams' },
     { id: 'setup', icon: Settings, label: 'Setup' },
   ]

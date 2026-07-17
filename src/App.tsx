@@ -7,6 +7,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const ExamsPage = lazy(() => import('./pages/ExamsPage'))
 const StudyCapsulesPage = lazy(() => import('./pages/StudyCapsulesPage'))
 const SetupPage = lazy(() => import('./pages/SetupPage'))
+const TutorPage = lazy(() => import('./pages/TutorPage'))
 const AuthPage = lazy(() => import('./pages/AuthPage'))
 import { Button } from './components/ui/Button'
 import { Dock } from './components/layout/Dock'
@@ -28,6 +29,7 @@ const viewPaths: Record<View, string> = {
   capsules: '/capsules',
   exams: '/exams',
   setup: '/setup',
+  tutor: '/tutor',
 }
 
 const pathViews: Record<string, View> = Object.fromEntries(
@@ -87,6 +89,15 @@ function AppShell() {
     return (
       <Suspense fallback={<PageLoading />}>
         <SetupPage onNavigate={handleNavigate} />
+        <Dock activeView={view} onNavigate={handleNavigate} />
+      </Suspense>
+    )
+  }
+
+  if (view === 'tutor') {
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <TutorPage onNavigate={handleNavigate} />
         <Dock activeView={view} onNavigate={handleNavigate} />
       </Suspense>
     )
@@ -395,6 +406,14 @@ function App() {
         />
         <Route
           path="/setup"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tutor"
           element={
             <ProtectedRoute>
               <AppShell />
