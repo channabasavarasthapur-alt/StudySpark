@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Trash2, AlertCircle, Loader2 } from 'lucide-react';
-import type { View } from '../types/navigation';
 import { Button } from '../components/ui/Button';
 
 interface Message {
@@ -8,11 +7,7 @@ interface Message {
   content: string;
 }
 
-interface TutorPageProps {
-  onNavigate: (view: View) => void;
-}
-
-export default function TutorPage({ onNavigate }: TutorPageProps) {
+export default function TutorPage() {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'model', content: "Hi! I'm your StudySpark AI Tutor. How can I help you with your studies today?" }
   ]);
@@ -73,8 +68,8 @@ export default function TutorPage({ onNavigate }: TutorPageProps) {
       const data = await response.json();
       setIsLoading(false);
       setMessages((prev) => [...prev, { role: 'model', content: data.response }]);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       // Remove the user message if it failed completely? Or leave it so they can read what they wrote.
       // We will leave it, the user can just resend.
     } finally {
@@ -102,9 +97,11 @@ export default function TutorPage({ onNavigate }: TutorPageProps) {
             <p className="text-xs text-muted">Powered by Gemini</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleClear} className="text-muted hover:text-red-500" title="Clear chat">
-          <Trash2 size={16} />
-        </Button>
+        <div title="Clear chat">
+          <Button variant="ghost" size="sm" onClick={handleClear} className="text-muted hover:text-red-500">
+            <Trash2 size={16} />
+          </Button>
+        </div>
       </header>
 
       {/* Messages Area */}

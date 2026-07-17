@@ -97,7 +97,7 @@ function AppShell() {
   if (view === 'tutor') {
     return (
       <Suspense fallback={<PageLoading />}>
-        <TutorPage onNavigate={handleNavigate} />
+        <TutorPage />
         <Dock activeView={view} onNavigate={handleNavigate} />
       </Suspense>
     )
